@@ -208,7 +208,8 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
-  scale_y_continuous(limit=c(0,250), oob = squish) +
+  coord_cartesian(ylim = c(0,250)) +
+  scale_y_continuous(oob = squish, labels = scales::percent) +
   ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
@@ -434,7 +435,8 @@ ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = st
   scale_x_date(date_labels="%b %d",
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
-  scale_y_continuous(limit=c(0,1), oob = squish, labels = scales::percent) +
+  coord_cartesian(ylim = c(0,.5)) +
+  scale_y_continuous(oob = squish, labels = scales::percent) +
   ggtitle("Percentage of Positive Tests Each Day") + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
@@ -444,6 +446,8 @@ ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = st
   scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
 ```
 
+Warning: the plots below contain several outliers where 
+
 ```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
 ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)) + 
@@ -451,7 +455,8 @@ ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)
   scale_x_date(date_labels="%b %d",
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
-  scale_y_continuous(limit=c(0,1), oob = squish, labels = scales::percent) +
+  coord_cartesian(ylim = c(0,.5)) +
+  scale_y_continuous(oob = squish, labels = scales::percent) +
   ggtitle("Percentage of Positive Tests Each Day") + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
