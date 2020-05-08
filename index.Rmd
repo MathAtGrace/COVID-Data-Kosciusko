@@ -92,7 +92,7 @@ gg_color_hue <- function(n) {
 
 &nbsp;
 
-### Hospitalizations
+### Hospitalizations - Indiana
 
 Govenor Holcomb as decided that hopspitalization numbers are one of the most important indicators for how we are doing.
 
@@ -112,10 +112,10 @@ ggplot(IN_Hosp, aes(x = date, y = difhosp_per)) +
   theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
   ylab(paste("New Hosps per", as.character(per), "People")) + 
   xlab("Date") +
-  stat_smooth(data = subset(IN_Hosp, date < yest), size = 1, se = FALSE, linetype = "dashed")
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
 ```
 
-### Cases
+### Cases - Indiana
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
 ggplot(Indiana, aes(x = date, y = difconfirmed_per)) + 
@@ -132,7 +132,7 @@ ggplot(Indiana, aes(x = date, y = difconfirmed_per)) +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed")
 ```
 
-### Deaths
+### Deaths - Indiana
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
 ggplot(Indiana, aes(x = date, y = difdeaths_per)) + 
@@ -157,7 +157,7 @@ ggplot(Indiana, aes(x = date, y = difdeaths_per)) +
 
 Note that the y-axis scales of these graphs are different than the state-level data.
 
-### Cases
+### Cases - Kosciusko
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
 ggplot(Kos, aes(x = date, y = difconfirmed_per)) + 
@@ -174,7 +174,7 @@ ggplot(Kos, aes(x = date, y = difconfirmed_per)) +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed")
 ```
 
-### Deaths
+### Deaths - Kosciusko
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
 ggplot(Kos, aes(x = date, y = difdeaths_per)) + 
@@ -196,7 +196,7 @@ ggplot(Kos, aes(x = date, y = difdeaths_per)) +
 
 &nbsp;
 
-### Cases
+### Cases - Outbreaks in Indiana
 The chart below does not contain two outliers for Cass County.  On April 26th, Cass County reported 271 new cases (575 per 80,000), and on April 27th, Cass County reported 439 new cases (932 per 80,000).
 
 ```{r echo=FALSE, fig.width=12, fig.height=5, message = FALSE, warning=FALSE}
@@ -212,11 +212,12 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
         legend.text = element_text(size = 15)) + 
   ylab(paste("Total Cases per Day")) + 
   xlab("Date") +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
+  facet_wrap(vars(county), nrow = 2, ncol = 2)
 ```
 
 
-### Deaths 
+### Deaths - Outbreaks in Indiana
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
 #Plot Deaths per Million per Day
@@ -241,28 +242,9 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
 
 &nbsp;
 
-### Cases
+### Cases - Counties Neighboring Kosciusko
 
-```{r, echo=FALSE, fig.width=12, fig.height=8, warning=FALSE, message=FALSE}
-#Plot Confirmed per Million per Day
-#breaks <- 10^(-10:10)
-#minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
-ggplot(KOS_neighbors, aes(x = date, y = difconfirmed_per, color = county)) + 
-  geom_point(size = 4) +
-  scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
-               minor_breaks = "1 day") + 
-#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
-  scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
-  theme(plot.title = element_text(size= 20, hjust = 0.5),
-        legend.text = element_text(size = 15)) + 
-  ylab(paste("New Cases per", per_word, "People")) + 
-  xlab("Date") +
-  facet_wrap(vars(county), nrow = 6, ncol = 2)
-```
-
-### Comparison of Smoothed Weighted Averages
+The first chart is a comparison of smoothed weighted averages.  The second chart is the actual data.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
 KOS_plus <- rbind(KOS_neighbors, Kos)
@@ -287,10 +269,48 @@ ggplot(KOS_plus, aes(x = date,
   scale_color_manual(values = c_vals)
 ```
 
+```{r, echo=FALSE, fig.width=12, fig.height=8, warning=FALSE, message=FALSE}
+#Plot Confirmed per Million per Day
+#breaks <- 10^(-10:10)
+#minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
+ggplot(KOS_neighbors, aes(x = date, y = difconfirmed_per, color = county)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Cases per", per_word, "People")) + 
+  xlab("Date") +
+  facet_wrap(vars(county), nrow = 6, ncol = 2)
+```
+
+
 &nbsp;
 
-### Deaths
+### Deaths - Counties Neighboring Kosciusko
 
+The first chart is a comparison of smoothed weighted averages.  The second chart is the actual data.
+
+```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
+ggplot(KOS_plus, aes(x = date,
+                     y = difdeaths_per, color = county)) + 
+  stat_smooth(size = 2, se = FALSE) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Deaths per", per_word, "People")) + 
+  xlab("Date") + 
+  scale_color_manual(values = c_vals)
+```
 
 ```{r, echo=FALSE, fig.width=12, fig.height=8, warning=FALSE, message=FALSE}
 #Plot Confirmed per Million per Day
@@ -310,49 +330,14 @@ ggplot(KOS_neighbors, aes(x = date, y = difdeaths_per, color = county)) +
   facet_wrap(vars(county), nrow = 6, ncol = 2)
 ```
 
-### Comparison of Smoothed Weighted Averages
-
-```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
-ggplot(KOS_plus, aes(x = date,
-                     y = difdeaths_per, color = county)) + 
-  stat_smooth(size = 2, se = FALSE) +
-  scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
-               minor_breaks = "1 day") + 
-#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
-  scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
-  theme(plot.title = element_text(size= 20, hjust = 0.5),
-        legend.text = element_text(size = 15)) + 
-  ylab(paste("New Deaths per", per_word, "People")) + 
-  xlab("Date") + 
-  scale_color_manual(values = c_vals)
-```
 
 &nbsp;
 
 # Neighboring States Data
 
-### Cases For Each Neighboring State
+### Cases - States Neighboring Indiana
 
-```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
-#Plot Deaths per Million per Day
-ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = state)) + 
-  geom_point(size = 4) +
-  scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
-               minor_breaks = "1 day") + 
-  scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
-  theme(plot.title = element_text(size= 20, hjust = 0.5),
-        legend.text = element_text(size = 15)) + 
-  ylab(paste("Cases per Day per", per_word, "People")) + 
-  xlab("Date") +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
-  facet_wrap(vars(state), nrow = 3, ncol = 2)
-```
-
-### Comparison of Smoothed Weighted Average of States
+The first plot is a comparison of smoothed weighted averages.  The second is the actual data.
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
@@ -371,26 +356,27 @@ ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = state)) +
   scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
 ```
 
-### Confirmed Deaths for Each State
-
-```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
-ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = state)) + 
+ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = state)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Deaths per Day per", per_word, "People")) + 
+  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
-  ylab(paste("Deaths per Day per", per_word, "People")) + 
+  ylab(paste("Cases per Day per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
   facet_wrap(vars(state), nrow = 3, ncol = 2)
 ```
 
-### Comparison of Smoothed Weighted Average of States
+
+### Deaths - States Neighboring Indiana
+
+The first plot is a comparison of smoothed weighted averages.  The second is the actual data.
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
@@ -408,30 +394,31 @@ ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = state)) +
   scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
 ```
 
-### Positive Test Rate
-
-Looking at the percentage of tests that come back positive can signal which states might have low case numbers because of lack of testing.
-
-For example, Michigan had a much higher death rate per capita than Illinois in mid-April, even though their case numbers per capita were only a little higher in late March and early April.  Michigan's high postive test rate late March and early April suggests that Michigan had worse testing than Illinois during that time.
-
-```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
-ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)) + 
+ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = state)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
-  scale_y_continuous(limit=c(0,1), oob = squish, labels = scales::percent) +
-  ggtitle("Percentage of Positive Tests Each Day") + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("Deaths per Day per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
-  ylab(paste("Percent Positive", per_word, "People")) + 
+  ylab(paste("Deaths per Day per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
   facet_wrap(vars(state), nrow = 3, ncol = 2)
 ```
 
-### Comparison of Smoothed Weighted Average of States
+
+### Positive Test Rate - States Neighboring Indiana
+
+Looking at the percentage of tests that come back positive can signal which states might have low case numbers because of lack of testing.
+
+For example, Michigan had a much higher death rate per capita than Illinois in mid-April, even though their case numbers per capita were only a little higher in late March and early April.  Michigan's high postive test rate late March and early April suggests that Michigan had worse testing than Illinois during that time.
+
+The first plot is a comparison of smoothed weighted averages.  The second is the actual data.
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
 #Plot Deaths per Million per Day
@@ -448,6 +435,25 @@ ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = st
   stat_smooth(size = 2, se = FALSE) +
   scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
 ```
+
+```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
+#Plot Deaths per Million per Day
+ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,1), oob = squish, labels = scales::percent) +
+  ggtitle("Percentage of Positive Tests Each Day") + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("Percent Positive", per_word, "People")) + 
+  xlab("Date") +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
+  facet_wrap(vars(state), nrow = 3, ncol = 2)
+```
+
+
 
 
 
