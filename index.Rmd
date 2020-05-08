@@ -209,7 +209,7 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   coord_cartesian(ylim = c(0,250)) +
-  scale_y_continuous(oob = squish, labels = scales::percent) +
+  scale_y_continuous(oob = squish) +
   ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
