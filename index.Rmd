@@ -1,109 +1,363 @@
 ---
-title: "COVID19 Data Near Grace College"
+title: "COVID19 Data Near Kosciusko County"
 author: "Compiled by Dr. Ryan Johnson using data from [@COVID19]"
+date: "Last updated `r format(Sys.time(), '%A, %B %d, %Y')`"
 output:
   html_document:
     df_print: paged
 bibliography: bibliography.bib
 ---
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 library(COVID19)
 require(tidyverse)
 library(dplyr)
 library(lubridate)
 library(scales)
-```
 
-```{r echo=FALSE}
 #Input parameters
-per = 10^4 #dislplay rates per how many people?
-per_word = "Ten Thousand"
+per = 8*10^4 #dislplay rates per how many people?
+per_word = "Eighty Thousand"
 data_start = as.Date("2020-03-20") #Start data at this day
-```
+states <- c("Michigan", "Illinois", "Ohio", "Kentucky")
+KOS_neighbor_counties <- c("Fulton", "Marshall", "Saint Joseph", "Elkhart", "LaGrange", "Noble", "Whitley", "Allen", "Huntington", "Wabash", "Miami")
+outbreaks = c("Cass", "Marion", "Decatur", "Lake")
 
-```{r echo=FALSE}
 #Get data and subset to states we want
 US_states <- covid19("US", level = 2, start = data_start)
-states <- c("Indiana", "Michigan", "Illinois", "Ohio", "Kentucky")
-neighbors <- subset(US_states, state %in% states)
-```
 
-```{r echo=FALSE}
 #What is the latest date of the data?
 yest <- max(US_states$date)
-```
 
-```{r echo=FALSE}
 #Get per-day numbers
-neighbors$difdeaths <- prepend(diff(neighbors$deaths), 0)
-neighbors$difconfirmed <- prepend(diff(neighbors$confirmed), 0)
-neighbors$diftests <- prepend(diff(neighbors$tests), 0)
-```
+US_states$difdeaths <- prepend(diff(US_states$deaths), 0)
+US_states$difconfirmed <- prepend(diff(US_states$confirmed), 0)
+US_states$diftests <- prepend(diff(US_states$tests), 0)
+US_states$difhosp <- prepend(diff(US_states$hosp), 0)
 
-```{r echo=FALSE}
 #Get per-population numbers
-neighbors$confirmedper <- neighbors$confirmed / neighbors$pop * per
-neighbors$deathsper <- neighbors$deaths / neighbors$pop * per
-neighbors$testsper <- neighbors$tests / neighbors$tests * per
-neighbors$difconfirmed_per <- neighbors$difconfirmed / neighbors$pop * per
-neighbors$difdeaths_per <- neighbors$difdeaths / neighbors$pop * per
-neighbors$diftests_per <- neighbors$diftests / neighbors$pop * per
-```
+US_states$confirmedper <- US_states$confirmed / US_states$pop * per
+US_states$deathsper <- US_states$deaths / US_states$pop * per
+US_states$testsper <- US_states$tests / US_states$tests * per
+US_states$difconfirmed_per <- US_states$difconfirmed / US_states$pop * per
+US_states$difdeaths_per <- US_states$difdeaths / US_states$pop * per
+US_states$diftests_per <- US_states$diftests / US_states$pop * per
+US_states$difhosp_per <- US_states$difhosp / US_states$pop * per
 
-```{r echo=FALSE}
 #Some convenient date subsets
-covyest <- neighbors[neighbors$date == yest,]
-covlabel <- neighbors[neighbors$date == as.Date("2020-04-20"),]
-cov5 <- neighbors[neighbors$date <= yest & neighbors$date > (yest - 5),]
-cov14 <- neighbors[neighbors$date <= yest & neighbors$date > (yest - 14),]
+covyest <- US_states[US_states$date == yest,]
+covlabel <- US_states[US_states$date == as.Date("2020-04-20"),]
+cov5 <- US_states[US_states$date <= yest & US_states$date > (yest - 5),]
+cov14 <- US_states[US_states$date <= yest & US_states$date > (yest - 14),]
+
+#State-level subsets
+Indiana <- subset(US_states, state == "Indiana")
+IN_neighbors <- subset(US_states, state %in% states)
+
+#County Level Data
+US_counties <- covid19("US", level = 3, start = data_start)
+IN_counties <- subset(US_counties, state == "Indiana")
+IN_counties$county <- as.factor(IN_counties$city)
+
+#Get per-day numbers
+IN_counties$difdeaths <- prepend(diff(IN_counties$deaths), 0)
+IN_counties$difconfirmed <- prepend(diff(IN_counties$confirmed), 0)
+IN_counties$diftests <- prepend(diff(IN_counties$tests), 0)
+
+#Get per-population numbers
+IN_counties$confirmedper <- IN_counties$confirmed / IN_counties$pop * per
+IN_counties$deathsper <- IN_counties$deaths / IN_counties$pop * per
+IN_counties$testsper <- IN_counties$tests / IN_counties$tests * per
+IN_counties$difconfirmed_per <- IN_counties$difconfirmed / IN_counties$pop * per
+IN_counties$difdeaths_per <- IN_counties$difdeaths / IN_counties$pop * per
+IN_counties$diftests_per <- IN_counties$diftests / IN_counties$pop * per
+
+Kos <- subset(IN_counties, county == "Kosciusko")
+IN_outbreak <- subset(IN_counties, county %in% outbreaks)
+KOS_neighbors <- subset(IN_counties, county %in% KOS_neighbor_counties)
 ```
 
 &nbsp;
 
-# Data from Indiana and Neighboring States
+#### All counts will be reported as per 80,000 because that is roughly the population of Kosciusko County.
 
 &nbsp;
 
-### Confirmed Deaths from COVID19
+# Indiana State Data
 
-Deaths data are the best indicator of the real prevalence of the disease, but deaths data lags behind case data.
+&nbsp;
 
-All numbers in this graph are per `r tolower(per_word)`.  Dots are the number of new deaths recorded each day.  Dashed lines are a weighted average.
+### Hospitalizations
 
+Govenor Holcomb as decided that hopspitalization numbers are one of the most important indicators for how we are doing.
 
-```{r, echo=FALSE, fig.width = 12, fig.height = 16}
-#Plot Deaths per Million per Day
-ggplot(neighbors, aes(x = date, y = difdeaths_per, color = state)) + 
+This graph starts much later than the others because hospitalization numbers were not reported until April 25.
+
+The blue dashed lines are smoothed weighted averages.
+
+```{r, echo=FALSE, fig.width=6, fig.height=3, message=FALSE}
+IN_Hosp <- subset(Indiana, date > as.Date("2020-04-25"))
+ggplot(IN_Hosp, aes(x = date, y = difhosp_per)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="2 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("Indiana New Hospitalizations per", per_word, "People")) + 
+  theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
+  ylab(paste("New Hosps per", as.character(per), "People")) + 
+  xlab("Date") +
+  stat_smooth(data = subset(IN_Hosp, date < yest), size = 1, se = FALSE, linetype = "dashed")
+```
+
+### Cases
+
+```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
+ggplot(Indiana, aes(x = date, y = difconfirmed_per)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("Indiana New Confirmed Cases per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Cases per", per_word, "People")) + 
+  xlab("Date") +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
+```
+
+### Deaths
+
+```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
+ggplot(Indiana, aes(x = date, y = difdeaths_per)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="3 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("Indiana New Confirmed Deaths per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Deaths per", per_word, "People")) + 
+  xlab("Date") +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
+```
+
+&nbsp;
+
+# Kosciusko Data
+
+&nbsp;
+
+Note that the y-axis scales of these graphs are different than the state-level data.
+
+### Cases
+
+```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
+ggplot(Kos, aes(x = date, y = difconfirmed_per)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="3 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("Kosciusko New Confirmed Cases per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Cases per", per_word, "People")) + 
+  xlab("Date") +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
+```
+
+### Deaths
+
+```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
+ggplot(Kos, aes(x = date, y = difdeaths_per)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="3 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("Kosciusko New Confirmed Deaths per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Deaths per", per_word, "People")) + 
+  xlab("Date")
+```
+
+&nbsp;
+
+# Indiana Outbreaks
+
+&nbsp;
+
+### Cases
+The chart below does not contain two outliers for Cass County.  On April 26th, Cass County reported 271 new cases (575 per 80,000), and on April 27th, Cass County reported 439 new cases (932 per 80,000).
+
+```{r echo=FALSE, fig.width=12, fig.height=12, message = FALSE, warning=FALSE}
+ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="3 days",
+               minor_breaks = "1 day") + 
+#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
+  scale_y_continuous(limit=c(0,220), oob = squish) +
+  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("Total Cases per Day")) + 
+  xlab("Date") +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
+```
+
+
+### Deaths 
+
+```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
+#Plot Deaths per Million per Day
+ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("Deaths per Day per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("Deaths per Day per", per_word, "People")) + 
+  xlab("Date") +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
+  facet_wrap(vars(county), nrow = 2, ncol = 2)
+```
+
+&nbsp;
+
+# Neighboring Counties
+
+&nbsp;
+
+### Cases
+
+
+```{r, echo=FALSE, fig.width=12, fig.height=12, warning=FALSE, message=FALSE}
+#Plot Confirmed per Million per Day
+#breaks <- 10^(-10:10)
+#minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
+ggplot(KOS_neighbors, aes(x = date, y = difconfirmed_per, color = county)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Cases per", per_word, "People")) + 
+  xlab("Date") +
+  facet_wrap(vars(county), nrow = 6, ncol = 2)
+```
+
+&nbsp;
+
+### Deaths
+
+
+```{r, echo=FALSE, fig.width=12, fig.height=12, warning=FALSE, message=FALSE}
+#Plot Confirmed per Million per Day
+#breaks <- 10^(-10:10)
+#minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
+ggplot(KOS_neighbors, aes(x = date, y = difdeaths_per, color = county)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
   theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
+  ylab(paste("New Deaths", per_word, "People")) + 
+  xlab("Date") +
+  facet_wrap(vars(county), nrow = 6, ncol = 2)
+```
+
+&nbsp;
+
+# Neighboring States Data
+
+### Cases For Each Neighboring State
+
+```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
+#Plot Deaths per Million per Day
+ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = state)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("Cases per Day per", per_word, "People")) + 
+  xlab("Date") +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
+  facet_wrap(vars(state), nrow = 3, ncol = 2)
+```
+
+### Comparison of Smoothed Weighted Average of States
+
+```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
+#Plot Deaths per Million per Day
+IN_and_neighbors <- rbind(IN_neighbors, Indiana)
+ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = state)) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="3 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("Cases per Day per", per_word, "People")) + 
+  xlab("Date") +
+  stat_smooth(size = 2, se = FALSE) +
+  scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
+```
+
+### Confirmed Deaths for Each State
+
+```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
+#Plot Deaths per Million per Day
+ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = state)) + 
+  geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("Deaths per Day per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
   ylab(paste("Deaths per Day per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
   facet_wrap(vars(state), nrow = 3, ncol = 2)
 ```
 
-### Confirmed Cases of COVID19
+### Comparison of Smoothed Weighted Average of States
 
-The case data below is also per `r tolower(per_word)`.  Dots are new confirmed cases of COVID19 each day.  The dashed lines are weighted averages.
-
-```{r, echo=FALSE, fig.width=12, fig.height=8}
-ggplot(neighbors, aes(x = date, y = difconfirmed_per, color = state)) + 
-  geom_point(size = 4) +
+```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
+#Plot Deaths per Million per Day
+ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = state)) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
-  theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
-  ylab(paste("Cases per Day per", per_word, "People")) + 
+  ggtitle(paste("Confirmed Deaths per Day per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("Deaths per Day per", per_word, "People")) + 
   xlab("Date") +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
+  stat_smooth(size = 2, se = FALSE) +
+  scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
 ```
 
 ### Positive Test Rate
@@ -112,106 +366,40 @@ Looking at the percentage of tests that come back positive can signal which stat
 
 For example, Michigan had a much higher death rate per capita than Illinois in mid-April, even though their case numbers per capita were only a little higher in late March and early April.  Michigan's high postive test rate late March and early April suggests that Michigan had worse testing than Illinois during that time.
 
-```{r, echo=FALSE, fig.width=12, fig.height=8}
-ggplot(neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)) + 
+```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
+#Plot Deaths per Million per Day
+ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)) + 
   geom_point(size = 4) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+  scale_y_continuous(limit=c(0,1), oob = squish, labels = scales::percent) +
+  ggtitle("Percentage of Positive Tests Each Day") + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("Percent Positive", per_word, "People")) + 
+  xlab("Date") +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
+  facet_wrap(vars(state), nrow = 3, ncol = 2)
+```
+
+### Comparison of Smoothed Weighted Average of States
+
+```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
+#Plot Deaths per Million per Day
+ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,1), oob = squish, labels = scales::percent) +
-  ggtitle("Percent Tests Positive each Day (Smoothed Running Average)") + 
-  theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
-  ylab("Percent Tests Positive") + 
+  ggtitle("Percentage of Positive Tests Each Day") + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab("Percent Positive") + 
   xlab("Date") +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
-```
-&nbsp;
-
-# County Level Data
-
-```{r echo=FALSE}
-#Redo parameters
-per = 10^4
-per_word = "Ten Thousand"
+  stat_smooth(size = 2, se = FALSE) +
+  scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
 ```
 
-```{r echo=FALSE}
-#County Level Data
-US_counties <- covid19("US", level = 3, start = data_start)
-cn <- c("Kosciusko", "Fulton", "Marshall", "Saint Joseph", "Elkhart", "LaGrange", "Noble", "Whitley", "Allen", "Huntington", "Wabash", "Miami", "Cass")
-IN_neighbors <- subset(US_counties, state == "Indiana" & city %in% cn)
-IN_neighbors$county <- as.factor(IN_neighbors$city)
-```
-
-```{r echo=FALSE}
-#Get per-day numbers
-IN_neighbors$difdeaths <- prepend(diff(IN_neighbors$deaths), 0)
-IN_neighbors$difconfirmed <- prepend(diff(IN_neighbors$confirmed), 0)
-IN_neighbors$diftests <- prepend(diff(IN_neighbors$tests), 0)
-```
-
-&nbsp;
-
-### Nearest Outbreak
-
-
-```{r echo=FALSE}
-#Get per-population numbers
-IN_neighbors$confirmedper <- IN_neighbors$confirmed / IN_neighbors$pop * per
-IN_neighbors$deathsper <- IN_neighbors$deaths / IN_neighbors$pop * per
-IN_neighbors$testsper <- IN_neighbors$tests / IN_neighbors$tests * per
-IN_neighbors$difconfirmed_per <- IN_neighbors$difconfirmed / IN_neighbors$pop * per
-IN_neighbors$difdeaths_per <- IN_neighbors$difdeaths / IN_neighbors$pop * per
-IN_neighbors$diftests_per <- IN_neighbors$diftests / IN_neighbors$pop * per
-```
-
-The nearest outbreak is in Cass County, Indiana.  It appears to be linked to the Tyson meatpacking plant.
-
-```{r echo=FALSE}
-outbreaks = c("Cass")
-IN_outbreaks <- subset(IN_neighbors, county %in% outbreaks)
-```
-
-```{r echo=FALSE, fig.width=12, fig.height=8}
-ggplot(IN_outbreaks, aes(x = date, y = difconfirmed_per * pop / per)) + 
-  geom_point(size = 4) +
-  scale_x_date(date_labels="%b %d",
-               date_breaks  ="3 days",
-               minor_breaks = "1 day") + 
-#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
-  scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Total Confirmed Cases per Day.", outbreaks[[1]], "County population is", as.character(IN_outbreaks$pop[[1]]))) + 
-  theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
-  ylab(paste("Total Cases per Day")) + 
-  xlab("Date")
-```
-
-&nbsp;
-
-### Non-outbreak Neighbors
-
-Besides Cass County, our neighboring counties have case levels that can fit in roughly the same scale.  Notice that the cases below are reported per `r tolower(per_word)` people.
-
-```{r echo=FALSE}
-IN_not_outbreaks <- subset(IN_neighbors, !(county %in% outbreaks))
-```
-
-```{r, echo=FALSE, fig.width=12, fig.height=20}
-#Plot Confirmed per Million per Day
-#breaks <- 10^(-10:10)
-#minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
-ggplot(IN_not_outbreaks, aes(x = date, y = difconfirmed_per, color = county)) + 
-  geom_point(size = 4) +
-  scale_x_date(date_labels="%b %d",
-               date_breaks  ="3 days",
-               minor_breaks = "1 day") + 
-#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
-  scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
-  theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
-  ylab(paste("Cases per Day per", per_word, "People")) + 
-  xlab("Date") +
-  facet_wrap(vars(county), nrow = 6, ncol = 2)
-```
 
 
