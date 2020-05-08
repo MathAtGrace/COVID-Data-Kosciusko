@@ -1,8 +1,9 @@
 ---
 title: "COVID19 Data Near Grace College"
 author: "Compiled by Dr. Ryan Johnson using data from [@COVID19]"
-date: '`r paste("Last updated", Sys.Date())`'
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 bibliography: bibliography.bib
 ---
 
