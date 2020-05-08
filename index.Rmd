@@ -199,14 +199,14 @@ ggplot(Kos, aes(x = date, y = difdeaths_per)) +
 ### Cases
 The chart below does not contain two outliers for Cass County.  On April 26th, Cass County reported 271 new cases (575 per 80,000), and on April 27th, Cass County reported 439 new cases (932 per 80,000).
 
-```{r echo=FALSE, fig.width=12, fig.height=12, message = FALSE, warning=FALSE}
+```{r echo=FALSE, fig.width=12, fig.height=5, message = FALSE, warning=FALSE}
 ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
-  scale_y_continuous(limit=c(0,220), oob = squish) +
+  scale_y_continuous(limit=c(0,250), oob = squish) +
   ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
