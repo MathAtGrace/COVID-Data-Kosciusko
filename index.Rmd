@@ -196,6 +196,8 @@ ggplot(Kos, aes(x = date, y = difdeaths_per)) +
 
 &nbsp;
 
+Note that the y-axis scales of these graphs are different than other sections.
+
 ### Cases - Outbreaks in Indiana
 The chart below does not contain two outliers for Cass County.  On April 26th, Cass County reported 271 new cases (575 per 80,000), and on April 27th, Cass County reported 439 new cases (932 per 80,000).
 
@@ -207,10 +209,10 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,250), oob = squish) +
-  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
+  ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
-  ylab(paste("Total Cases per Day")) + 
+  ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
   facet_wrap(vars(county), nrow = 2, ncol = 2)
@@ -227,10 +229,10 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Deaths per Day per", per_word, "People")) + 
+  ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
-  ylab(paste("Deaths per Day per", per_word, "People")) + 
+  ylab(paste("New Deaths per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
   facet_wrap(vars(county), nrow = 2, ncol = 2)
@@ -241,6 +243,8 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
 # Neighboring Counties
 
 &nbsp;
+
+Note that the y-axis scales of these graphs are different than other sections.
 
 ### Cases - Counties Neighboring Kosciusko
 
@@ -334,6 +338,10 @@ ggplot(KOS_neighbors, aes(x = date, y = difdeaths_per, color = county)) +
 &nbsp;
 
 # Neighboring States Data
+
+&nbsp;
+
+Note that the y-axis scales of these graphs are different than other sections.
 
 ### Cases - States Neighboring Indiana
 
@@ -457,3 +465,4 @@ ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)
 
 
 
+Data Source:
