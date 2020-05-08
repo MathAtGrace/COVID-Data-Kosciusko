@@ -20,7 +20,7 @@ per = 8*10^4 #dislplay rates per how many people?
 per_word = "Eighty Thousand"
 data_start = as.Date("2020-03-20") #Start data at this day
 states <- c("Michigan", "Illinois", "Ohio", "Kentucky")
-KOS_neighbor_counties <- c("Fulton", "Marshall", "Saint Joseph", "Elkhart", "LaGrange", "Noble", "Whitley", "Allen", "Huntington", "Wabash", "Miami")
+KOS_neighbor_counties <- c("Fulton", "Marshall", "Elkhart", "LaGrange", "Noble", "Whitley", "Allen", "Huntington", "Wabash", "Miami")
 outbreaks = c("Cass", "Marion", "Decatur", "Lake")
 
 #Get data and subset to states we want
@@ -75,6 +75,11 @@ IN_counties$diftests_per <- IN_counties$diftests / IN_counties$pop * per
 Kos <- subset(IN_counties, county == "Kosciusko")
 IN_outbreak <- subset(IN_counties, county %in% outbreaks)
 KOS_neighbors <- subset(IN_counties, county %in% KOS_neighbor_counties)
+
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
 ```
 
 &nbsp;
@@ -238,8 +243,7 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
 
 ### Cases
 
-
-```{r, echo=FALSE, fig.width=12, fig.height=12, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, fig.width=12, fig.height=8, warning=FALSE, message=FALSE}
 #Plot Confirmed per Million per Day
 #breaks <- 10^(-10:10)
 #minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
@@ -258,12 +262,37 @@ ggplot(KOS_neighbors, aes(x = date, y = difconfirmed_per, color = county)) +
   facet_wrap(vars(county), nrow = 6, ncol = 2)
 ```
 
+### Comparison of Smoothed Weighted Averages
+
+```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
+KOS_plus <- rbind(KOS_neighbors, Kos)
+KOS_plus$county <- droplevels(KOS_plus$county)
+n = length(KOS_neighbor_counties)
+m = match("Kosciusko", levels(KOS_plus$county)) - 1
+c_vals = append(gg_color_hue(n), "black", after = m)
+names(c_vals) <- levels(KOS_plus$county)
+ggplot(KOS_plus, aes(x = date,
+                     y = difconfirmed_per, color = county)) + 
+  stat_smooth(size = 2, se = FALSE) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Cases per", per_word, "People")) + 
+  xlab("Date") + 
+  scale_color_manual(values = c_vals)
+```
+
 &nbsp;
 
 ### Deaths
 
 
-```{r, echo=FALSE, fig.width=12, fig.height=12, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, fig.width=12, fig.height=8, warning=FALSE, message=FALSE}
 #Plot Confirmed per Million per Day
 #breaks <- 10^(-10:10)
 #minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
@@ -279,6 +308,25 @@ ggplot(KOS_neighbors, aes(x = date, y = difdeaths_per, color = county)) +
   ylab(paste("New Deaths", per_word, "People")) + 
   xlab("Date") +
   facet_wrap(vars(county), nrow = 6, ncol = 2)
+```
+
+### Comparison of Smoothed Weighted Averages
+
+```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
+ggplot(KOS_plus, aes(x = date,
+                     y = difdeaths_per, color = county)) + 
+  stat_smooth(size = 2, se = FALSE) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="6 days",
+               minor_breaks = "1 day") + 
+#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Deaths per", per_word, "People")) + 
+  xlab("Date") + 
+  scale_color_manual(values = c_vals)
 ```
 
 &nbsp;
