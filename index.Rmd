@@ -140,6 +140,26 @@ ggplot(Indiana, aes(x = date, y = difconfirmed_per)) +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed")
 ```
 
+### Percentage of Positive Tests
+
+The percentage of tests coming back positive is one way to measure the prevalence of testing.
+
+```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
+ggplot(Indiana, aes(x = date, y = (difconfirmed / diftests))) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="3 days",
+               minor_breaks = "1 day") + 
+  coord_cartesian(ylim = c(0,.5)) +
+  scale_y_continuous(oob = squish, labels = scales::percent) +
+  ggtitle("Indiana Percentage of Positive Tests Each Day") + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab("Percent Positive") + 
+  xlab("Date") +
+  geom_point(size = 2) +
+  stat_smooth(linetype = "dashed", se = FALSE)
+```
+
 ### Deaths - Indiana
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
@@ -219,7 +239,7 @@ ggplot(IN_outbreak, aes(x = date,
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
+  ggtitle(paste("Outbreaks - New Confirmed Cases per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Cases per", per_word, "People")) + 
@@ -237,7 +257,7 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   coord_cartesian(ylim = c(0,200)) +
   scale_y_continuous(oob = squish) +
-  ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
+  ggtitle(paste("Outbreaks - New Confirmed Cases per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Cases per", per_word, "People")) + 
@@ -261,7 +281,7 @@ ggplot(IN_outbreak, aes(x = date,
   ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
-  ylab(paste("New Deaths per", per_word, "People")) + 
+  ylab(paste("Outbreaks - New Deaths per", per_word, "People")) + 
   xlab("Date")
 ```
 
@@ -276,7 +296,7 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
   ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
-  ylab(paste("New Deaths per", per_word, "People")) + 
+  ylab(paste("Outbreaks - New Deaths per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
   facet_wrap(vars(county), nrow = 3, ncol = 2)
