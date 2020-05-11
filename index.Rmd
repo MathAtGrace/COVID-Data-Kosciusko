@@ -21,7 +21,7 @@ per = 8*10^4 #dislplay rates per how many people?
 per_word = "Eighty Thousand"
 data_start = as.Date("2020-03-20") #Start data at this day
 states <- c("Michigan", "Illinois", "Ohio", "Kentucky")
-KOS_neighbor_counties <- c("Fulton", "Marshall", "Elkhart", "LaGrange", "Noble", "Whitley", "Allen", "Huntington", "Wabash", "Miami")
+KOS_neighbor_counties <- c("Fulton", "Marshall", "Elkhart", "Noble", "Whitley", "Allen", "Wabash")
 #outbreaks = c("Cass", "Marion", "Decatur", "Lake")
 
 #Get data and subset to states we want
@@ -159,7 +159,7 @@ ggplot(Indiana, aes(x = date, y = (difconfirmed / diftests))) +
         legend.text = element_text(size = 15)) + 
   ylab("Percent Positive") + 
   xlab("Date") +
-  geom_point(size = 2) +
+  geom_point(size = 4) +
   stat_smooth(linetype = "dashed", se = FALSE)
 ```
 
