@@ -14,6 +14,7 @@ require(tidyverse)
 library(dplyr)
 library(lubridate)
 library(scales)
+library(usmap)
 
 #Input parameters
 per = 8*10^4 #dislplay rates per how many people?
@@ -79,6 +80,8 @@ Indices$death_index <- Indices$difdeaths_per/sum(Indices$difdeaths_per)
 Indices$combined <- sqrt(Indices$case_index^2 + Indices$death_index^2)
 Indices <- Indices[order(-Indices$combined),]
 outbreaks <- Indices$county[1:6]
+
+Indices$fips <- fips("IN", county = Indices$county)
 
 Kos <- subset(IN_counties, county == "Kosciusko")
 IN_outbreak <- subset(IN_counties, county %in% outbreaks)
@@ -222,9 +225,21 @@ ggplot(Kos, aes(x = date, y = difdeaths_per)) +
 
 # Indiana Outbreaks
 
+The coloring scheme for the map below is based on a combination of new cases and new deaths per captita in the past week.  The coloring scheme is relative, it will always color the worst county pure red.
+
+```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE}
+plot_usmap("counties",
+           data = Indices, values = "combined", color = "blue",
+           include = Indices$fips, labels = TRUE) + 
+    scale_fill_continuous(name = "Outbreak Index",
+                          low = "white", high = "red") + 
+    theme(legend.position = "right")
+```
+
+
 &nbsp;
 
-These are the six counties in Indiana with the worst combination of confirmed cases and deaths over the past week.
+Below are the six counties in Indiana with the worst combination of new confirmed cases and new confirmed deaths over the past week.
 
 Note that the y-axis scales of these graphs are different than other sections.
 
