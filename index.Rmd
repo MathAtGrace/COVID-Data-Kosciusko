@@ -21,7 +21,7 @@ per_word = "Eighty Thousand"
 data_start = as.Date("2020-03-20") #Start data at this day
 states <- c("Michigan", "Illinois", "Ohio", "Kentucky")
 KOS_neighbor_counties <- c("Fulton", "Marshall", "Elkhart", "LaGrange", "Noble", "Whitley", "Allen", "Huntington", "Wabash", "Miami")
-outbreaks = c("Cass", "Marion", "Decatur", "Lake")
+#outbreaks = c("Cass", "Marion", "Decatur", "Lake")
 
 #Get data and subset to states we want
 US_states <- covid19("US", level = 2, start = data_start)
@@ -71,6 +71,14 @@ IN_counties$testsper <- IN_counties$tests / IN_counties$tests * per
 IN_counties$difconfirmed_per <- IN_counties$difconfirmed / IN_counties$pop * per
 IN_counties$difdeaths_per <- IN_counties$difdeaths / IN_counties$pop * per
 IN_counties$diftests_per <- IN_counties$diftests / IN_counties$pop * per
+
+IN7 <- IN_counties[US_states$date <= yest & US_states$date > (yest - 7),]
+Indices <- aggregate(cbind(difconfirmed_per, difdeaths_per) ~ county, data = IN7, FUN = sum)
+Indices$case_index <- Indices$difconfirmed_per/sum(Indices$difconfirmed_per)
+Indices$death_index <- Indices$difdeaths_per/sum(Indices$difdeaths_per)
+Indices$combined <- sqrt(Indices$case_index^2 + Indices$death_index^2)
+Indices <- Indices[order(-Indices$combined),]
+outbreaks <- Indices$county[1:6]
 
 Kos <- subset(IN_counties, county == "Kosciusko")
 IN_outbreak <- subset(IN_counties, county %in% outbreaks)
@@ -196,19 +204,38 @@ ggplot(Kos, aes(x = date, y = difdeaths_per)) +
 
 &nbsp;
 
+These are the six counties in Indiana with the worst combination of confirmed cases and deaths over the past week.
+
 Note that the y-axis scales of these graphs are different than other sections.
 
 ### Cases - Outbreaks in Indiana
+
+```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
+ggplot(IN_outbreak, aes(x = date,
+                     y = difconfirmed_per, color = county)) + 
+  stat_smooth(size = 2, se = FALSE) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="3 days",
+               minor_breaks = "1 day") + 
+#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Cases per", per_word, "People")) + 
+  xlab("Date")
+```
+
 The chart below does not contain two outliers for Cass County.  On April 26th, Cass County reported 271 new cases (575 per 80,000), and on April 27th, Cass County reported 439 new cases (932 per 80,000).
 
 ```{r echo=FALSE, fig.width=12, fig.height=5, message = FALSE, warning=FALSE}
 ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="3 days",
+               date_breaks  ="6 days",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
-  coord_cartesian(ylim = c(0,250)) +
+  coord_cartesian(ylim = c(0,200)) +
   scale_y_continuous(oob = squish) +
   ggtitle(paste("New Confirmed Cases per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
@@ -216,11 +243,27 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
   ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
-  facet_wrap(vars(county), nrow = 2, ncol = 2)
+  facet_wrap(vars(county), nrow = 3, ncol = 2)
 ```
 
 
 ### Deaths - Outbreaks in Indiana
+
+```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
+ggplot(IN_outbreak, aes(x = date,
+                     y = difdeaths_per, color = county)) + 
+  stat_smooth(size = 2, se = FALSE) +
+  scale_x_date(date_labels="%b %d",
+               date_breaks  ="3 days",
+               minor_breaks = "1 day") + 
+#  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
+  ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
+  ylab(paste("New Deaths per", per_word, "People")) + 
+  xlab("Date")
+```
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
 #Plot Deaths per Million per Day
@@ -236,7 +279,7 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
   ylab(paste("New Deaths per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
-  facet_wrap(vars(county), nrow = 2, ncol = 2)
+  facet_wrap(vars(county), nrow = 3, ncol = 2)
 ```
 
 &nbsp;
