@@ -293,10 +293,10 @@ ggplot(IN_outbreak, aes(x = date,
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
+  ggtitle(paste("Outbreaks - New Confirmed Deaths per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
-  ylab(paste("Outbreaks - New Deaths per", per_word, "People")) + 
+  ylab(paste("New Deaths per", per_word, "People")) + 
   xlab("Date")
 ```
 
@@ -308,10 +308,10 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("New Confirmed Deaths per", per_word, "People")) + 
+  ggtitle(paste("Outbreaks - New Confirmed Deaths per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
-  ylab(paste("Outbreaks - New Deaths per", per_word, "People")) + 
+  ylab(paste("New Deaths per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
   facet_wrap(vars(county), nrow = 3, ncol = 2)
@@ -434,7 +434,7 @@ ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = state)) +
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
+  ggtitle(paste("New Confirmed Cases per Day per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab(paste("Cases per Day per", per_word, "People")) + 
@@ -451,7 +451,7 @@ ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = state)) +
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Confirmed Cases per Day per", per_word, "People")) + 
+  ggtitle(paste("New Confirmed Cases per Day per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab(paste("Cases per Day per", per_word, "People")) + 
@@ -472,7 +472,7 @@ ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = state)) +
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Confirmed Deaths per Day per", per_word, "People")) + 
+  ggtitle(paste("New Confirmed Deaths per Day per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab(paste("Deaths per Day per", per_word, "People")) + 
@@ -489,7 +489,7 @@ ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = state)) +
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Deaths per Day per", per_word, "People")) + 
+  ggtitle(paste("New Confirmed Deaths per Day per", per_word, "People")) + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab(paste("Deaths per Day per", per_word, "People")) + 
