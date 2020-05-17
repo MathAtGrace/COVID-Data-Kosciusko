@@ -111,7 +111,7 @@ This graph starts much later than the others because hospitalization numbers wer
 The blue dashed lines are smoothed weighted averages.
 
 ```{r, echo=FALSE, fig.width=6, fig.height=3, message=FALSE}
-IN_Hosp <- subset(Indiana, date > as.Date("2020-04-25"))
+IN_Hosp <- subset(Indiana, date >= as.Date("2020-04-25"))
 ggplot(IN_Hosp, aes(x = date, y = hosp_per)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
