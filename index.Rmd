@@ -34,7 +34,6 @@ yest <- max(US_states$date)
 US_states$difdeaths <- prepend(diff(US_states$deaths), 0)
 US_states$difconfirmed <- prepend(diff(US_states$confirmed), 0)
 US_states$diftests <- prepend(diff(US_states$tests), 0)
-US_states$difhosp <- prepend(diff(US_states$hosp), 0)
 
 #Get per-population numbers
 US_states$confirmedper <- US_states$confirmed / US_states$pop * per
@@ -43,7 +42,7 @@ US_states$testsper <- US_states$tests / US_states$tests * per
 US_states$difconfirmed_per <- US_states$difconfirmed / US_states$pop * per
 US_states$difdeaths_per <- US_states$difdeaths / US_states$pop * per
 US_states$diftests_per <- US_states$diftests / US_states$pop * per
-US_states$difhosp_per <- US_states$difhosp / US_states$pop * per
+US_states$hosp_per <- US_states$hosp / US_states$pop * per
 
 #Some convenient date subsets
 covyest <- US_states[US_states$date == yest,]
@@ -113,18 +112,18 @@ The blue dashed lines are smoothed weighted averages.
 
 ```{r, echo=FALSE, fig.width=6, fig.height=3, message=FALSE}
 IN_Hosp <- subset(Indiana, date > as.Date("2020-04-25"))
-ggplot(IN_Hosp, aes(x = date, y = difhosp_per)) + 
+ggplot(IN_Hosp, aes(x = date, y = hosp_per)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="2 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  ggtitle(paste("Indiana New Hospitalizations per", per_word, "People")) + 
+  ggtitle(paste("Indiana Hospitalizations per", per_word, "People")) + 
   theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
-  ylab(paste("New Hosps per", as.character(per), "People")) + 
+  ylab(paste("Hosps per", as.character(per), "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE,
-              linetype = "dashed", span = 0.9)
+              linetype = "dashed")
 ```
 
 ### Cases - Indiana
