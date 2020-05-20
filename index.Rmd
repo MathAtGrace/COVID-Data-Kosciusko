@@ -115,7 +115,7 @@ IN_Hosp <- subset(Indiana, date >= as.Date("2020-04-25"))
 ggplot(IN_Hosp, aes(x = date, y = hosp_per)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="2 days",
+               date_breaks  ="3 days",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("Indiana Hospitalizations per", per_word, "People")) + 
@@ -123,7 +123,8 @@ ggplot(IN_Hosp, aes(x = date, y = hosp_per)) +
   ylab(paste("Hosps per", as.character(per), "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE,
-              linetype = "dashed")
+              linetype = "dashed") +
+  geom_vline(xintercept = as.Date("2020-05-01"))
 ```
 
 ### Cases - Indiana
@@ -140,7 +141,9 @@ ggplot(Indiana, aes(x = date, y = difconfirmed_per)) +
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 ### Percentage of Positive Tests
@@ -160,7 +163,9 @@ ggplot(Indiana, aes(x = date, y = (difconfirmed / diftests))) +
   ylab("Percent Positive") + 
   xlab("Date") +
   geom_point(size = 4) +
-  stat_smooth(linetype = "dashed", se = FALSE)
+  stat_smooth(linetype = "dashed", se = FALSE) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 ### Deaths - Indiana
@@ -177,7 +182,9 @@ ggplot(Indiana, aes(x = date, y = difdeaths_per)) +
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Deaths per", per_word, "People")) + 
   xlab("Date") +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 &nbsp;
@@ -202,7 +209,9 @@ ggplot(Kos, aes(x = date, y = difconfirmed_per)) +
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed")
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 ### Deaths - Kosciusko
@@ -218,7 +227,9 @@ ggplot(Kos, aes(x = date, y = difdeaths_per)) +
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Deaths per", per_word, "People")) + 
-  xlab("Date")
+  xlab("Date") +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 &nbsp;
@@ -260,7 +271,9 @@ ggplot(IN_outbreak, aes(x = date,
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Cases per", per_word, "People")) + 
-  xlab("Date")
+  xlab("Date") +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 The chart below does not contain two outliers for Cass County.  On April 26th, Cass County reported 271 new cases (575 per 80,000), and on April 27th, Cass County reported 439 new cases (932 per 80,000).
@@ -280,7 +293,9 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
   ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
-  facet_wrap(vars(county), nrow = 3, ncol = 2)
+  facet_wrap(vars(county), nrow = 3, ncol = 2) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 
@@ -301,7 +316,9 @@ ggplot(IN_outbreak, aes(x = date,
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Deaths per", per_word, "People")) + 
-  xlab("Date")
+  xlab("Date") +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
@@ -318,7 +335,9 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
   ylab(paste("New Deaths per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
-  facet_wrap(vars(county), nrow = 3, ncol = 2)
+  facet_wrap(vars(county), nrow = 3, ncol = 2) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 &nbsp;
@@ -353,7 +372,9 @@ ggplot(KOS_plus, aes(x = date,
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") + 
-  scale_color_manual(values = c_vals)
+  scale_color_manual(values = c_vals) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 ```{r, echo=FALSE, fig.width=12, fig.height=8, warning=FALSE, message=FALSE}
@@ -372,7 +393,9 @@ ggplot(KOS_neighbors, aes(x = date, y = difconfirmed_per, color = county)) +
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") +
-  facet_wrap(vars(county), nrow = 6, ncol = 2)
+  facet_wrap(vars(county), nrow = 6, ncol = 2) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 
@@ -396,7 +419,9 @@ ggplot(KOS_plus, aes(x = date,
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Deaths per", per_word, "People")) + 
   xlab("Date") + 
-  scale_color_manual(values = c_vals)
+  scale_color_manual(values = c_vals) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 ```{r, echo=FALSE, fig.width=12, fig.height=8, warning=FALSE, message=FALSE}
@@ -414,7 +439,9 @@ ggplot(KOS_neighbors, aes(x = date, y = difdeaths_per, color = county)) +
   theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
   ylab(paste("New Deaths", per_word, "People")) + 
   xlab("Date") +
-  facet_wrap(vars(county), nrow = 6, ncol = 2)
+  facet_wrap(vars(county), nrow = 6, ncol = 2) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 
@@ -444,7 +471,9 @@ ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = state)) +
   ylab(paste("Cases per Day per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 2, se = FALSE) +
-  scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
+  scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00")) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
@@ -461,7 +490,9 @@ ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = state)) +
   ylab(paste("Cases per Day per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
-  facet_wrap(vars(state), nrow = 3, ncol = 2)
+  facet_wrap(vars(state), nrow = 3, ncol = 2) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 
@@ -482,7 +513,9 @@ ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = state)) +
   ylab(paste("Deaths per Day per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 2, se = FALSE) +
-  scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
+  scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00")) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
@@ -499,7 +532,9 @@ ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = state)) +
   ylab(paste("Deaths per Day per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
-  facet_wrap(vars(state), nrow = 3, ncol = 2)
+  facet_wrap(vars(state), nrow = 3, ncol = 2) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 
@@ -525,7 +560,9 @@ ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = st
   ylab("Percent Positive") + 
   xlab("Date") +
   stat_smooth(size = 2, se = FALSE) +
-  scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00"))
+  scale_color_manual(values = c("Indiana" = "black", "Michigan" = "#00BFC4", "Illinois" = "#F8766D", "Ohio" = "#C77CFF", "Kentucky" = "#7CAE00")) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 Warning: the plots below contain several outliers where 
@@ -545,7 +582,9 @@ ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)
   ylab(paste("Percent Positive", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
-  facet_wrap(vars(state), nrow = 3, ncol = 2)
+  facet_wrap(vars(state), nrow = 3, ncol = 2) +
+  geom_vline(xintercept = as.Date("2020-05-01")) +
+  geom_vline(xintercept = as.Date("2020-04-01"))
 ```
 
 
