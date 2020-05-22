@@ -64,6 +64,10 @@ IN_counties$difdeaths <- prepend(diff(IN_counties$deaths), 0)
 IN_counties$difconfirmed <- prepend(diff(IN_counties$confirmed), 0)
 IN_counties$diftests <- prepend(diff(IN_counties$tests), 0)
 
+#Weird Date Correction
+#new_start = date_start + 1
+IN_counties <- subset(IN_counties, IN_counties$date > data_start)
+
 #Get per-population numbers
 IN_counties$confirmedper <- IN_counties$confirmed / IN_counties$pop * per
 IN_counties$deathsper <- IN_counties$deaths / IN_counties$pop * per
