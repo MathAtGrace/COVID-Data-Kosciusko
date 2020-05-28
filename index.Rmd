@@ -557,7 +557,9 @@ ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = st
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
   coord_cartesian(ylim = c(0,.5)) +
-  scale_y_continuous(oob = squish, labels = scales::percent) +
+  scale_y_continuous(limit=c(0,NA),
+                     oob = squish,
+                     labels = scales::percent) +
   ggtitle("Percentage of Positive Tests Each Day") + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
@@ -579,7 +581,9 @@ ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
   coord_cartesian(ylim = c(0,.5)) +
-  scale_y_continuous(oob = squish, labels = scales::percent) +
+  scale_y_continuous(limit=c(0,NA),
+                     oob = squish,
+                     labels = scales::percent) +
   ggtitle("Percentage of Positive Tests Each Day") + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
