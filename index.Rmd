@@ -8,7 +8,7 @@ output:
 bibliography: bibliography.bib
 ---
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
 library(COVID19)
 require(tidyverse)
 library(dplyr)
@@ -36,13 +36,13 @@ US_states$difconfirmed <- prepend(diff(US_states$confirmed), 0)
 US_states$diftests <- prepend(diff(US_states$tests), 0)
 
 #Get per-population numbers
-US_states$confirmedper <- US_states$confirmed / US_states$pop * per
-US_states$deathsper <- US_states$deaths / US_states$pop * per
-US_states$testsper <- US_states$tests / US_states$tests * per
-US_states$difconfirmed_per <- US_states$difconfirmed / US_states$pop * per
-US_states$difdeaths_per <- US_states$difdeaths / US_states$pop * per
-US_states$diftests_per <- US_states$diftests / US_states$pop * per
-US_states$hosp_per <- US_states$hosp / US_states$pop * per
+US_states$confirmedper <- US_states$confirmed / US_states$population * per
+US_states$deathsper <- US_states$deaths / US_states$population * per
+US_states$testsper <- US_states$tests / US_states$population * per
+US_states$difconfirmed_per <- US_states$difconfirmed / US_states$population * per
+US_states$difdeaths_per <- US_states$difdeaths / US_states$population * per
+US_states$diftests_per <- US_states$diftests / US_states$population * per
+US_states$hosp_per <- US_states$hosp / US_states$population * per
 
 #Some convenient date subsets
 covyest <- US_states[US_states$date == yest,]
@@ -51,13 +51,14 @@ cov5 <- US_states[US_states$date <= yest & US_states$date > (yest - 5),]
 cov14 <- US_states[US_states$date <= yest & US_states$date > (yest - 14),]
 
 #State-level subsets
-Indiana <- subset(US_states, state == "Indiana")
-IN_neighbors <- subset(US_states, state %in% states)
+Indiana <- subset(US_states, administrative_area_level_2 == "Indiana")
+IN_neighbors <- subset(US_states, administrative_area_level_2 %in% states)
 
 #County Level Data
 US_counties <- covid19("US", level = 3, start = data_start)
-IN_counties <- subset(US_counties, state == "Indiana")
-IN_counties$county <- as.factor(IN_counties$city)
+IN_counties <- subset(US_counties,
+                      administrative_area_level_2 == "Indiana")
+IN_counties$county <- as.factor(IN_counties$administrative_area_level_3)
 
 #Get per-day numbers
 IN_counties$difdeaths <- prepend(diff(IN_counties$deaths), 0)
@@ -69,14 +70,14 @@ IN_counties$diftests <- prepend(diff(IN_counties$tests), 0)
 IN_counties <- subset(IN_counties, IN_counties$date > data_start)
 
 #Get per-population numbers
-IN_counties$confirmedper <- IN_counties$confirmed / IN_counties$pop * per
-IN_counties$deathsper <- IN_counties$deaths / IN_counties$pop * per
-IN_counties$testsper <- IN_counties$tests / IN_counties$tests * per
-IN_counties$difconfirmed_per <- IN_counties$difconfirmed / IN_counties$pop * per
-IN_counties$difdeaths_per <- IN_counties$difdeaths / IN_counties$pop * per
-IN_counties$diftests_per <- IN_counties$diftests / IN_counties$pop * per
+IN_counties$confirmedper <- IN_counties$confirmed / IN_counties$population * per
+IN_counties$deathsper <- IN_counties$deaths / IN_counties$population * per
+IN_counties$testsper <- IN_counties$tests / IN_counties$population * per
+IN_counties$difconfirmed_per <- IN_counties$difconfirmed / IN_counties$population * per
+IN_counties$difdeaths_per <- IN_counties$difdeaths / IN_counties$population * per
+IN_counties$diftests_per <- IN_counties$diftests / IN_counties$population * per
 
-IN7 <- IN_counties[US_states$date <= yest & US_states$date > (yest - 7),]
+IN7 <- IN_counties[IN_counties$date <= yest & IN_counties$date > (yest - 7),]
 Indices <- aggregate(cbind(difconfirmed_per, difdeaths_per) ~ county, data = IN7, FUN = sum)
 Indices$case_index <- Indices$difconfirmed_per/sum(Indices$difconfirmed_per)
 Indices$death_index <- Indices$difdeaths_per/sum(Indices$difdeaths_per)
@@ -481,7 +482,7 @@ The first plot is a comparison of smoothed weighted averages.  The second is the
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
 IN_and_neighbors <- rbind(IN_neighbors, Indiana)
-ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = state)) +
+ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = administrative_area_level_2)) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
@@ -500,7 +501,7 @@ ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = state)) +
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
-ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = state)) + 
+ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = administrative_area_level_2)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="6 days",
@@ -512,7 +513,7 @@ ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = state)) +
   ylab(paste("Cases per Day per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = weekspan) +
-  facet_wrap(vars(state), nrow = 3, ncol = 2) +
+  facet_wrap(vars(administrative_area_level_2), nrow = 3, ncol = 2) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01"))
@@ -525,7 +526,7 @@ The first plot is a comparison of smoothed weighted averages.  The second is the
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
-ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = state)) +
+ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = administrative_area_level_2)) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
@@ -544,7 +545,7 @@ ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = state)) +
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
-ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = state)) + 
+ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = administrative_area_level_2)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="6 days",
@@ -556,7 +557,7 @@ ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = state)) +
   ylab(paste("Deaths per Day per", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = weekspan) +
-  facet_wrap(vars(state), nrow = 3, ncol = 2) +
+  facet_wrap(vars(administrative_area_level_2), nrow = 3, ncol = 2) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01"))
@@ -573,7 +574,7 @@ The first plot is a comparison of smoothed weighted averages.  The second is the
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
 #Plot Deaths per Million per Day
-ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)) +
+ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = administrative_area_level_2)) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="3 days",
                minor_breaks = "1 day") + 
@@ -597,7 +598,7 @@ Warning: the plots below contain several outliers where
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
 #Plot Deaths per Million per Day
-ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)) + 
+ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = administrative_area_level_2)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="6 days",
@@ -612,7 +613,7 @@ ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = state)
   ylab(paste("Percent Positive", per_word, "People")) + 
   xlab("Date") +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = weekspan) +
-  facet_wrap(vars(state), nrow = 3, ncol = 2) +
+  facet_wrap(vars(administrative_area_level_2), nrow = 3, ncol = 2) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01"))
