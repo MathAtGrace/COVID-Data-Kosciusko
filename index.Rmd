@@ -1,6 +1,6 @@
 ---
 title: "COVID19 Data Near Kosciusko County"
-author: "Compiled by Dr. Ryan Johnson using data from [@COVID19]"
+author: "Compiled by Dr. Ryan Johnson using data from @COVID19, @WorldBank, @Oxford, @JohnHopkins"
 date: "Last updated `r format(Sys.time(), '%A, %B %d, %Y')`"
 output:
   html_document:
@@ -623,4 +623,4 @@ ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = admini
 
 
 
-Data Source:
+Data Sources:
