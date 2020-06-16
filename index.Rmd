@@ -28,7 +28,7 @@ KOS_neighbor_counties <- c("Fulton", "Marshall", "Elkhart", "Noble", "Whitley", 
 US_states <- covid19("US", level = 2, start = data_start)
 
 #What is the latest date of the data?
-yest <- max(US_states$date)
+yest <- Sys.Date() - 1
 
 #Get per-day numbers
 US_states$difdeaths <- prepend(diff(US_states$deaths), 0)
@@ -262,7 +262,7 @@ plot_usmap("counties",
 ```
 
 
-&nbsp;
+
 
 Below are the six counties in Indiana with the worst combination of new confirmed cases and new confirmed deaths over the past week.
 
@@ -619,7 +619,26 @@ ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = admini
   geom_vline(xintercept = as.Date("2020-06-01"))
 ```
 
+&nbsp;
 
+# US outbreaks by state
+
+The coloring scheme for the map below is based on a combination of average hospitalizations and new deaths per captita in the past week.  The coloring scheme is relative, it will always color the worst state pure red.
+
+```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE}
+US7 <- US_states[US_states$date <= yest & US_states$date > (yest - 7),]
+US7$state <- US7$administrative_area_level_2
+US_Indices <- aggregate(cbind(hosp_per, difdeaths_per) ~ state, data = US7, FUN = sum)
+US_Indices$hosp_index <- US_Indices$hosp_per/sum(US_Indices$hosp_per)
+US_Indices$death_index <- US_Indices$difdeaths_per/sum(US_Indices$difdeaths_per)
+US_Indices$combined <- sqrt(US_Indices$hosp_index^2 + US_Indices$death_index^2)
+plot_usmap("states",
+           data = US_Indices, values = "combined", color = "blue",
+           include = US_Indices$fips, labels = TRUE) + 
+    scale_fill_continuous(name = "Outbreak Index",
+                          low = "white", high = "red") + 
+    theme(legend.position = "right")
+```
 
 
 
