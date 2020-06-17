@@ -25,11 +25,11 @@ states <- c("Michigan", "Illinois", "Ohio", "Kentucky")
 KOS_neighbor_counties <- c("Fulton", "Marshall", "Elkhart", "Noble", "Whitley", "Allen", "Wabash")
 #outbreaks = c("Cass", "Marion", "Decatur", "Lake")
 
-#Get data and subset to states we want
-US_states <- covid19("US", level = 2, start = data_start)
-
 #What is the latest date of the data?
 yest <- Sys.Date() - 1
+
+#Get data and subset to states we want
+US_states <- covid19("US", level = 2, start = data_start, end = yest)
 
 #Get per-day numbers
 US_states$difdeaths <- prepend(diff(US_states$deaths), 0)
@@ -56,7 +56,7 @@ Indiana <- subset(US_states, administrative_area_level_2 == "Indiana")
 IN_neighbors <- subset(US_states, administrative_area_level_2 %in% states)
 
 #County Level Data
-US_counties <- covid19("US", level = 3, start = data_start)
+US_counties <- covid19("US", level = 3, start = data_start, end = yest)
 IN_counties <- subset(US_counties,
                       administrative_area_level_2 == "Indiana")
 IN_counties$county <- as.factor(IN_counties$administrative_area_level_3)
@@ -676,7 +676,7 @@ USc_Indices$county <- as.factor(USc_Indices$county)
 
 USc_Indices$confirmed_index <- USc_Indices$difconfirmed_per/sum(USc_Indices$difconfirmed_per)
 USc_Indices$death_index <- USc_Indices$difdeaths_per/sum(USc_Indices$difdeaths_per)
-USc_Indices$combined <- (USc_Indices$confirmed_index^2 + USc_Indices$death_index^2)^(1/4)
+USc_Indices$combined <- (USc_Indices$confirmed_index^2 + USc_Indices$death_index^2)^(1/5)
 
 USc_Indices$fips <- NA
 for (state in c("Alabama", levels(US7c$state)[3:51])){
