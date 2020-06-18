@@ -61,6 +61,9 @@ IN_counties <- subset(US_counties,
                       administrative_area_level_2 == "Indiana")
 IN_counties$county <- as.factor(IN_counties$administrative_area_level_3)
 
+#Fix typo in DeKalb County
+IN_counties[IN_counties$date == "2020-04-13" & IN_counties$county == "DeKalb", "confirmed"] <- 6
+
 #Get per-day numbers
 IN_counties$difdeaths <- prepend(diff(IN_counties$deaths), 0)
 IN_counties$difconfirmed <- prepend(diff(IN_counties$confirmed), 0)
@@ -308,6 +311,7 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") +
+  scale_y_continuous(limit=c(0,NA), oob = squish) +
   stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = weekspan) +
   facet_wrap(vars(county), nrow = 3, ncol = 2) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
