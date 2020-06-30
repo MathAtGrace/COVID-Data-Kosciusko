@@ -1,6 +1,6 @@
 ---
 title: "COVID19 Data Near Kosciusko County"
-author: "Compiled by Dr. Ryan Johnson using data from @COVID19, @WorldBank, @Oxford, @JohnHopkins"
+author: "Compiled by Dr. Ryan Johnson using data from @NYT based on reports from state and local health agencies by way of @COVID19."
 date: "Last updated `r format(Sys.time(), '%A, %B %d, %Y')`"
 output:
   html_document:
@@ -91,7 +91,7 @@ outbreaks <- Indices$county[1:6]
 
 Indices$fips <- fips("IN", county = Indices$county)
 
-Kos <- subset(IN_counties, county == "Kosciusko")
+Kos <- subset(IN_counties, county == "Kosciusko", date < yest)
 IN_outbreak <- subset(IN_counties, county %in% outbreaks)
 KOS_neighbors <- subset(IN_counties, county %in% KOS_neighbor_counties)
 
@@ -232,6 +232,8 @@ ggplot(Kos, aes(x = date, y = difconfirmed_per)) +
 ```
 
 ### Deaths - Kosciusko
+
+Note that if the number of deaths below is more than the official count according to Kosciusko county, that is most likely because our data source is also counting non-residents of Kosciusko county who have died in Koscisusko county.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
 ggplot(Kos, aes(x = date, y = difdeaths_per)) + 
