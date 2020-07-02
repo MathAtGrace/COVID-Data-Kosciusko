@@ -638,7 +638,7 @@ US7$state <- US7$administrative_area_level_2
 US_Indices <- aggregate(cbind(hosp_per, difdeaths_per) ~ state, data = US7, FUN = sum)
 US_Indices$hosp_index <- US_Indices$hosp_per/sum(US_Indices$hosp_per)
 US_Indices$death_index <- US_Indices$difdeaths_per/sum(US_Indices$difdeaths_per)
-US_Indices$combined <- sqrt(US_Indices$hosp_index^2 + US_Indices$death_index^2)
+US_Indices$combined <- sqrt(2*US_Indices$hosp_index^2 + US_Indices$death_index^2)
 plot_usmap("states",
            data = US_Indices, values = "combined", color = "blue",
            include = US_Indices$fips, labels = TRUE) + 
@@ -685,7 +685,7 @@ USc_Indices$county <- as.factor(USc_Indices$county)
 
 USc_Indices$confirmed_index <- USc_Indices$difconfirmed_per/sum(USc_Indices$difconfirmed_per)
 USc_Indices$death_index <- USc_Indices$difdeaths_per/sum(USc_Indices$difdeaths_per)
-USc_Indices$combined <- (USc_Indices$confirmed_index^2 + USc_Indices$death_index^2)^(1/5)
+USc_Indices$combined <- (2*USc_Indices$confirmed_index^2 + USc_Indices$death_index^2)^(1/5)
 
 USc_Indices$fips <- NA
 for (state in c("Alabama", levels(US7c$state)[3:51])){
