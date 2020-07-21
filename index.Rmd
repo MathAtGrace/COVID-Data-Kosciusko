@@ -684,33 +684,38 @@ US_counties$diftests_per <- US_counties$diftests / US_counties$population * per
 US7c <- US_counties[US_counties$date <= yest & US_counties$date > (yest - 7),]
 US7c$county <- factor(US7c$administrative_area_level_3)
 US7c$state <- factor(US7c$administrative_area_level_2)
-USc_Indices <- aggregate(cbind(difconfirmed_per, difdeaths_per) ~ state + county, data = US7c, FUN = sum)
+USc_Indices <- aggregate(cbind(difconfirmed_per, difdeaths_per) ~ state + county + key_numeric, data = US7c, FUN = sum)
 
 #Fix errors
-USc_Indices <- subset(USc_Indices, USc_Indices$county != "Out of GA")
-USc_Indices <- subset(USc_Indices, USc_Indices$county != "Out of TN")
-USc_Indices <- subset(USc_Indices, USc_Indices$county != "Kansas City")
-USc_Indices <- subset(USc_Indices, USc_Indices$county != "New York City")
-USc_Indices <- subset(USc_Indices, USc_Indices$county != "City of Joplin")
-USc_Indices <- subset(USc_Indices, USc_Indices$state != "Alaska")
-VAc <- counties("Virginia", cb = TRUE)
-VAC <- data.frame("county" = VAc$NAME, "FIP" = VAc$COUNTYFP)
-VAC <- subset(VAC, FIP < 200)
-USc_Indices <- subset(USc_Indices, USc_Indices$state != "Virginia" | USc_Indices$county %in% VAC$county)
-USc_Indices$county <- as.character(USc_Indices$county)
-USc_Indices[USc_Indices$state == "Louisiana",]$county <- paste(USc_Indices[USc_Indices$state == "Louisiana",]$county, "Parish")
-USc_Indices[USc_Indices$state == "Louisiana" & USc_Indices$county == "LaSalle Parish",]$county <- "La Salle Parish"
-USc_Indices$county <- as.factor(USc_Indices$county)
+# <- subset(USc_Indices, USc_Indices$county != "Out of GA")
+#USc_Indices <- subset(USc_Indices, USc_Indices$county != "Out of TN")
+#USc_Indices <- subset(USc_Indices, USc_Indices$county != "Kansas City")
+#USc_Indices <- subset(USc_Indices, USc_Indices$county != "New York City")
+#USc_Indices <- subset(USc_Indices, USc_Indices$county != "City of Joplin")
+#USc_Indices <- subset(USc_Indices, USc_Indices$state != "Alaska")
+#VAc <- counties("Virginia", cb = TRUE)
+#VAC <- data.frame("county" = VAc$NAME, "FIP" = VAc$COUNTYFP)
+#VAC <- subset(VAC, FIP < 200)
+#USc_Indices <- subset(USc_Indices, USc_Indices$state != "Virginia" | USc_Indices$county %in% VAC$county)
+#USc_Indices$county <- as.character(USc_Indices$county)
+#USc_Indices[USc_Indices$state == "Louisiana",]$county <- paste(USc_Indices[USc_Indices$state == "Louisiana",]$county, "Parish")
+#USc_Indices[USc_Indices$state == "Louisiana" & USc_Indices$county == "LaSalle Parish",]$county <- "La Salle Parish"
+#USc_Indices$county <- as.factor(USc_Indices$county)
 
 
 USc_Indices$confirmed_index <- USc_Indices$difconfirmed_per/sum(USc_Indices$difconfirmed_per)
 USc_Indices$death_index <- USc_Indices$difdeaths_per/sum(USc_Indices$difdeaths_per)
 USc_Indices$combined <- (2*USc_Indices$confirmed_index^2 + USc_Indices$death_index^2)^(1/5)
 
-USc_Indices$fips <- NA
-for (state in c("Alabama", levels(US7c$state)[3:51])){
-     USc_Indices[USc_Indices$state == state,]$fips <- fips(state = state, county = USc_Indices[USc_Indices$state == state,]$county)
-}
+USc_Indices$fips <- USc_Indices$key_numeric
+USc_Indices$fips <- as.character(USc_Indices$fips)
+USc_Indices$fips <- paste0("0", USc_Indices$fips)
+USc_Indices$fips <- substr(USc_Indices$fips, nchar(USc_Indices$fips)-4, nchar(USc_Indices$fips))
+
+#USc_Indices$fips <- NA
+#for (state in c("Alabama", levels(US7c$state)[3:51])){
+#     USc_Indices[USc_Indices$state == state,]$fips <- fips(state = state, county = USc_Indices[USc_Indices$state == state,]$county)
+#}
 
 states <- plot_usmap("states", color = "black", fill = alpha(0.01))
 counties <- plot_usmap(data = USc_Indices,
