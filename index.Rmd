@@ -283,7 +283,7 @@ The first chart is a comparison of smoothed weighted averages. The second chart 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
 ggplot(IN_outbreak, aes(x = date,
                      y = difconfirmed_per, color = county)) + 
-  stat_smooth(size = 2, se = FALSE, span = weekspan) +
+  stat_smooth(size = 2, se = FALSE, span = 5/3*weekspan) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="5 days",
                minor_breaks = "1 day") + 
@@ -317,7 +317,7 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
   ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") +
   scale_y_continuous(limit=c(0,NA), oob = squish) +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = weekspan) +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = 5/3*weekspan) +
   facet_wrap(vars(county), nrow = 3, ncol = 2) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
@@ -333,7 +333,7 @@ The first chart is a comparison of smoothed weighted averages. The second chart 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
 ggplot(IN_outbreak, aes(x = date,
                      y = difdeaths_per, color = county)) + 
-  stat_smooth(size = 2, se = FALSE, span = weekspan) +
+  stat_smooth(size = 2, se = FALSE, span = 5/3*weekspan) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="5 days",
                minor_breaks = "1 day") + 
@@ -363,7 +363,7 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Deaths per", per_word, "People")) + 
   xlab("Date") +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = weekspan) +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = 5/3*weekspan) +
   facet_wrap(vars(county), nrow = 3, ncol = 2) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
@@ -392,7 +392,7 @@ c_vals = append(gg_color_hue(n), "black", after = m)
 names(c_vals) <- levels(KOS_plus$county)
 ggplot(KOS_plus, aes(x = date,
                      y = difconfirmed_per, color = county)) + 
-  stat_smooth(size = 2, se = FALSE, span = weekspan) +
+  stat_smooth(size = 2, se = FALSE, span = 5/3*weekspan) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
@@ -443,7 +443,7 @@ The first chart is a comparison of smoothed weighted averages.  The second chart
 ```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
 ggplot(KOS_plus, aes(x = date,
                      y = difdeaths_per, color = county)) + 
-  stat_smooth(size = 2, se = FALSE, span = weekspan) +
+  stat_smooth(size = 2, se = FALSE, span = 5/3*weekspan) +
   scale_x_date(date_labels="%b %d",
                date_breaks  ="6 days",
                minor_breaks = "1 day") + 
