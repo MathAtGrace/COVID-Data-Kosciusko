@@ -815,7 +815,7 @@ ggplot(US_outbreak, aes(x = date, y = difdeaths_per, color = state)) +
 
 # US outbreaks by county
 
-The coloring scheme for the map below is based on a combination of new confirmed cases per capita and new deaths per captita in the past week.  The coloring scheme is relative, it will always color the worst state pure red.
+The coloring scheme for the map below is based on a combination of new confirmed cases per capita and new deaths per captita in the past week.  The coloring scheme is relative, it will always color the worst county pure red.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE, warning=FALSE, results='hide'}
 US_counties$difdeaths <- prepend(diff(US_counties$deaths), 0)
