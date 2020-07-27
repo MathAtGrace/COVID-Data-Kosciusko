@@ -225,7 +225,7 @@ ggplot(Kos, aes(x = date, y = difconfirmed_per)) +
         legend.text = element_text(size = 15)) + 
   ylab(paste("New Cases per", per_word, "People")) + 
   xlab("Date") +
-  stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = weekspan) +
+  stat_smooth(size = 1, se = FALSE, linetype = "dashed", span = 5/3*weekspan) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
