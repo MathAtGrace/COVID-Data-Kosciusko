@@ -16,6 +16,9 @@ library(lubridate)
 library(scales)
 library(usmap)
 library(tigris)
+library(drat)
+#drat::addRepo("kjhealy")
+#library(covdata)
 
 #Input parameters
 per = 8*10^4 #dislplay rates per how many people?
@@ -25,7 +28,7 @@ states <- c("Michigan", "Illinois", "Ohio", "Kentucky")
 KOS_neighbor_counties <- c("Fulton", "Marshall", "Elkhart", "Noble", "Whitley", "Allen", "Wabash")
 
 #What is the latest date of the data?
-yest <- Sys.Date() - 1
+yest <- Sys.Date() - 1 #Weird stuff going on with updating of data
 
 #Get data and subset to states we want
 US_states <- covid19("US", level = 2, start = data_start, end = yest)
