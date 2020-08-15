@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+.httr-oauth
+Grace_internal.pdf
+Grace_internal.Rmd
