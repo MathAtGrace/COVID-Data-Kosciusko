@@ -16,9 +16,13 @@ library(lubridate)
 library(scales)
 library(usmap)
 library(tigris)
-library(drat)
+library(rmarkdown)
 #drat::addRepo("kjhealy")
 #library(covdata)
+
+#Update Grace Internal Data
+rmarkdown::render('Grace_internal.Rmd',
+                  output_file = 'G:/Shared drives/Dashboard - COVID-19/Grace_internal.pdf')
 
 #Input parameters
 per = 8*10^4 #dislplay rates per how many people?
