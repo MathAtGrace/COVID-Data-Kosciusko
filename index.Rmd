@@ -21,8 +21,10 @@ library(rmarkdown)
 #library(covdata)
 
 #Update Grace Internal Data
-rmarkdown::render('Grace_internal.Rmd',
-                  output_file = 'G:/Shared drives/Dashboard - COVID-19/Grace_internal.pdf')
+fname = paste0('G:/Shared drives/Dashboard - COVID-19/Grace internal ',
+              format(Sys.time(), '%Y-%m-%d'),
+              '.pdf')
+rmarkdown::render('Grace_internal.Rmd', output_file = fname)
 
 #Input parameters
 per = 8*10^4 #dislplay rates per how many people?
