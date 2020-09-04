@@ -142,7 +142,7 @@ ggplot(Indiana, aes(x = date, y = hosp_per)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ### Cases - Indiana
@@ -164,7 +164,7 @@ ggplot(Indiana, aes(x = date, y = difconfirmed_per)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ### Percentage of Positive Tests
@@ -188,7 +188,7 @@ ggplot(Indiana, aes(x = date, y = (difconfirmed / diftests))) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ### Deaths - Indiana
@@ -209,7 +209,7 @@ ggplot(Indiana, aes(x = date, y = difdeaths_per)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 &nbsp;
@@ -238,7 +238,7 @@ ggplot(Kos, aes(x = date, y = difconfirmed_per)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ### Deaths - Kosciusko
@@ -260,7 +260,7 @@ ggplot(Kos, aes(x = date, y = difdeaths_per)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 &nbsp;
@@ -306,7 +306,7 @@ ggplot(IN_outbreak, aes(x = date,
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 The chart below does not contain two outliers for Cass County.  On April 26th, Cass County reported 271 new cases (575 per 80,000), and on April 27th, Cass County reported 439 new cases (932 per 80,000).
@@ -331,7 +331,7 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 
@@ -356,7 +356,7 @@ ggplot(IN_outbreak, aes(x = date,
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
@@ -377,7 +377,7 @@ ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 &nbsp;
@@ -416,7 +416,7 @@ ggplot(KOS_plus, aes(x = date,
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ```{r, echo=FALSE, fig.width=12, fig.height=8, warning=FALSE, message=FALSE}
@@ -439,7 +439,7 @@ ggplot(KOS_neighbors, aes(x = date, y = difconfirmed_per, color = county)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 
@@ -467,7 +467,7 @@ ggplot(KOS_plus, aes(x = date,
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ```{r, echo=FALSE, fig.width=12, fig.height=8, warning=FALSE, message=FALSE}
@@ -489,7 +489,7 @@ ggplot(KOS_neighbors, aes(x = date, y = difdeaths_per, color = county)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 
@@ -523,7 +523,7 @@ ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = administrat
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
@@ -544,7 +544,7 @@ ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = administrative_
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 &nbsp;
@@ -572,7 +572,7 @@ ggplot(IN_and_neighbors, aes(x = date,
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 
@@ -597,7 +597,7 @@ ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = administrative
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 6, message=FALSE, warning=FALSE}
@@ -618,7 +618,7 @@ ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = administrative_are
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 
@@ -650,7 +650,7 @@ ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = ad
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 Warning: the plots below contain several outliers where 
@@ -676,7 +676,7 @@ ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = admini
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 &nbsp;
@@ -725,7 +725,7 @@ ggplot(US_outbreak, aes(x = date,
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
@@ -745,7 +745,7 @@ ggplot(US_outbreak, aes(x = date, y = difconfirmed_per, color = state)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 &nbsp;
@@ -772,7 +772,7 @@ ggplot(US_outbreak, aes(x = date,
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 &nbsp;
@@ -799,7 +799,7 @@ ggplot(US_outbreak, aes(x = date,
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
@@ -819,7 +819,7 @@ ggplot(US_outbreak, aes(x = date, y = difdeaths_per, color = state)) +
   geom_vline(xintercept = as.Date("2020-05-01")) +
   geom_vline(xintercept = as.Date("2020-04-01")) +
   geom_vline(xintercept = as.Date("2020-06-01")) +
-  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01"))
+  geom_vline(xintercept = as.Date("2020-07-01"))  +   geom_vline(xintercept = as.Date("2020-08-01")) + geom_vline(xintercept = as.Date("2020-09-01"))
 ```
 
 # US outbreaks by county
