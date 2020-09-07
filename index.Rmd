@@ -74,16 +74,12 @@ IN_counties <- subset(US_counties,
 #US_counties$deaths <- US_counties$Deaths
 #US_counties$confirmed <- US_counties$Confirmed
 
-IN_counties <- subset(US_counties,
-                      Province_State == "Indiana")
-#IN_counties$county <- as.factor(IN_counties$administrative_area_level_3)
-IN_counties$county <- as.factor(IN_counties$Admin2)
+#IN_counties <- subset(US_counties,                       Province_State == "Indiana")
+IN_counties$county <- as.factor(IN_counties$administrative_area_level_3)
+#IN_counties$county <- as.factor(IN_counties$Admin2)
 
-
-
-#Chage this back if back to old package
 #Fix typo in DeKalb County
-#IN_counties[IN_counties$date == "2020-04-13" & IN_counties$county == "DeKalb", "confirmed"] <- 6
+IN_counties[IN_counties$date == "2020-04-13" & IN_counties$county == "DeKalb", "confirmed"] <- 6
 
 #Get per-day numbers
 IN_counties$difdeaths <- prepend(diff(IN_counties$deaths), 0)
