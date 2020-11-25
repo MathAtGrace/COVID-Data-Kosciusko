@@ -17,14 +17,19 @@ library(scales)
 library(usmap)
 library(tigris)
 library(rmarkdown)
-#drat::addRepo("kjhealy")
-#library(covdata)
+library(tidyverse)
+library(readxl)
+library(httr)
+library(zoo)
+library(data.table)
+library(usmap)
+library(useful)
 
 #Update Grace Internal Data
-fname = paste0('G:/Shared drives/Dashboard - COVID-19/Grace internal ',
-              format(Sys.time(), '%Y-%m-%d'),
-              '.pdf')
-rmarkdown::render('Grace_internal2.Rmd', output_file = fname)
+#fname = paste0('G:/Shared drives/Dashboard - COVID-19/Grace internal ',
+#              format(Sys.time(), '%Y-%m-%d'),
+#              '.pdf')
+#rmarkdown::render('Grace_internal2.Rmd', output_file = fname)
 
 #Input parameters
 per = 8*10^4 #dislplay rates per how many people?
@@ -37,21 +42,20 @@ KOS_neighbor_counties <- c("Fulton", "Marshall", "Elkhart", "Noble", "Whitley", 
 yest <- Sys.Date() - 1 #Weird stuff going on with updating of data
 
 #Get data and subset to states we want
-US_states <- covid19("US", level = 2, start = data_start, end = yest)
-
-#Get per-day numbers
-US_states$difdeaths <- prepend(diff(US_states$deaths), 0)
-US_states$difconfirmed <- prepend(diff(US_states$confirmed), 0)
-US_states$diftests <- prepend(diff(US_states$tests), 0)
-
-#Get per-population numbers
-US_states$confirmedper <- US_states$confirmed / US_states$population * per
-US_states$deathsper <- US_states$deaths / US_states$population * per
-US_states$testsper <- US_states$tests / US_states$population * per
-US_states$difconfirmed_per <- US_states$difconfirmed / US_states$population * per
-US_states$difdeaths_per <- US_states$difdeaths / US_states$population * per
-US_states$diftests_per <- US_states$diftests / US_states$population * per
-US_states$hosp_per <- US_states$hosp / US_states$population * per
+US_states <- covid19("US", level = 2, start = data_start, end = yest) %>%
+  #Compute per-day numbers from totals
+  mutate(difdeaths = prepend(diff(deaths), 0),
+         difconfirmed = prepend(diff(confirmed), 0),
+         diftests = prepend(diff(tests), 0)) %>%
+  #Compute per-population numbers
+  mutate(confirmedper = confirmed / population * per,
+         deathsper = deaths / population * per,
+         testsper = tests / population * per,
+         difconfirmed_per = difconfirmed / population * per,
+         difdeaths_per = difdeaths / population * per,
+         diftests_per = diftests / population * per,
+         hosp_per = hosp / population * per)
+  
 
 #Some convenient date subsets
 covyest <- US_states[US_states$date == yest,]
@@ -65,50 +69,55 @@ IN_neighbors <- subset(US_states, administrative_area_level_2 %in% states)
 
 
 #County Level Data
-US_counties <- covid19("US", level = 3, start = data_start, end = yest)
-#covid19.data.ALLcases <- covid19.data()
-#US_counties <- subset(covid19.data.ALLcases, Country_Region == "US")
-IN_counties <- subset(US_counties,
-                      administrative_area_level_2 == "Indiana")
+url = "https://hub.mph.in.gov/dataset/bd08cdd3-9ab1-4d70-b933-41f9ef7b809d/resource/afaa225d-ac4e-4e80-9190-f6800c366b58/download/covid_report_county_date.xlsx"
+GET(url, write_disk(tf <- tempfile(fileext = ".xlsx")))
+IN_counties <- read_excel(tf)%>%
+  #Correct data structures
+  mutate(DATE = as.Date(DATE),
+         COUNTY_NAME = factor(COUNTY_NAME))%>%
+  #Filter after data_start
+  filter(DATE > data_start) %>%
+  #Compute per-day numbers
+  mutate(difdeaths = COVID_DEATHS,
+         difconfirmed = COVID_COUNT)
 
-#US_counties$deaths <- US_counties$Deaths
-#US_counties$confirmed <- US_counties$Confirmed
+#Add geographic and population data
+lat_and_long <- read_excel("lat_and_long.xlsx") %>%
+  mutate(COUNTY_NUMERIC = COUNTY_NUMERIC + 18000)
+load("county_populations.RData")
+county_data <- merge(x = pops, y = lat_and_long,
+                     by.x = "key_numeric",
+                     by.y = "COUNTY_NUMERIC")
+IN_counties <- merge(x = IN_counties, y = county_data,
+                 by.x = "LOCATION_ID",
+                 by.y = "key_numeric")
+  
+#Compute per-population numbers
+IN_counties <- IN_counties %>%
+  mutate(confirmedper = COVID_COUNT / population * per,
+         deathsper = COVID_DEATHS / population * per,
+         difconfirmed_per = difconfirmed / population * per,
+         difdeaths_per = difdeaths / population * per,
+         county = COUNTY_NAME.x)
 
-#IN_counties <- subset(US_counties,                       Province_State == "Indiana")
-IN_counties$county <- as.factor(IN_counties$administrative_area_level_3)
-#IN_counties$county <- as.factor(IN_counties$Admin2)
-
-#Fix typo in DeKalb County
-IN_counties[IN_counties$date == "2020-04-13" & IN_counties$county == "DeKalb", "confirmed"] <- 6
-
-#Get per-day numbers
-IN_counties$difdeaths <- prepend(diff(IN_counties$deaths), 0)
-IN_counties$difconfirmed <- prepend(diff(IN_counties$confirmed), 0)
-IN_counties$diftests <- prepend(diff(IN_counties$tests), 0)
-
-#Weird Date Correction
-#new_start = date_start + 1
-IN_counties <- subset(IN_counties, IN_counties$date > data_start)
-
-#Get per-population numbers
-IN_counties$confirmedper <- IN_counties$confirmed / IN_counties$population * per
-IN_counties$deathsper <- IN_counties$deaths / IN_counties$population * per
-IN_counties$testsper <- IN_counties$tests / IN_counties$population * per
-IN_counties$difconfirmed_per <- IN_counties$difconfirmed / IN_counties$population * per
-IN_counties$difdeaths_per <- IN_counties$difdeaths / IN_counties$population * per
-IN_counties$diftests_per <- IN_counties$diftests / IN_counties$population * per
-
-IN7 <- IN_counties[IN_counties$date <= yest & IN_counties$date > (yest - 7),]
-Indices <- aggregate(cbind(difconfirmed_per, difdeaths_per) ~ county, data = IN7, FUN = sum)
-Indices$case_index <- Indices$difconfirmed_per/sum(Indices$difconfirmed_per)
-Indices$death_index <- Indices$difdeaths_per/sum(Indices$difdeaths_per)
-Indices$combined <- sqrt(Indices$case_index^2 + Indices$death_index^2)
+Indices <- IN_counties %>%
+  group_by(COUNTY_NAME.x) %>%
+  mutate(POSITIVE_TEST_RATE_MOVING_AVG = lag(POSITIVE_TEST_RATE_MOVING_AVG, 6),
+         ALL_TESTS_POSITIVE_TEST_RATE_MOVING_AVG =
+           lag(ALL_TESTS_POSITIVE_TEST_RATE_MOVING_AVG, 6)) %>%
+  filter(DATE == yest-1) %>%
+  ungroup() %>%
+  mutate(Case_per = COVID_COUNT_MOVING_AVG / population * per,
+         case_index = Case_per/sum(Case_per),
+         positivity_index = POSITIVE_TEST_RATE_MOVING_AVG/sum(POSITIVE_TEST_RATE_MOVING_AVG),
+         combined = sqrt(case_index * positivity_index),
+         dashboard = Case_per/2 + POSITIVE_TEST_RATE_MOVING_AVG/10,
+         fips = LOCATION_ID)
+ 
 Indices <- Indices[order(-Indices$combined),]
-outbreaks <- Indices$county[1:6]
+outbreaks <- Indices$COUNTY_NAME.x[1:6] 
 
-Indices$fips <- fips("IN", county = Indices$county)
-
-Kos <- subset(IN_counties, county == "Kosciusko", date < yest)
+Kos <- subset(IN_counties, county == "Kosciusko", DATE < yest)
 IN_outbreak <- subset(IN_counties, county %in% outbreaks)
 KOS_neighbors <- subset(IN_counties, county %in% KOS_neighbor_counties)
 
@@ -141,11 +150,12 @@ Because hospitalizations are smoother than cases or deaths, we present the data 
 ggplot(Indiana, aes(x = date, y = hosp_per)) + 
   geom_line(size = 3) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(1,NA)) +
   ggtitle(paste("Indiana Hospitalizations per", per_word, "People")) + 
-  theme(plot.title = element_text(hjust = 0.5), legend.text = element_text(size = 15)) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        legend.text = element_text(size = 15)) + 
   ylab(paste("Hosps per", as.character(per), "People")) + 
   xlab("Date") +
   geom_vline(xintercept =  seq(as.Date("2020/4/1"), yest, "months"))
@@ -157,7 +167,7 @@ ggplot(Indiana, aes(x = date, y = hosp_per)) +
 ggplot(Indiana, aes(x = date, y = difconfirmed_per)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("Indiana New Confirmed Cases per", per_word, "People")) + 
@@ -177,7 +187,7 @@ The percentage of tests coming back positive is one way to measure the prevalenc
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
 ggplot(Indiana, aes(x = date, y = (difconfirmed / diftests))) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   coord_cartesian(ylim = c(0,.5)) +
   scale_y_continuous(oob = squish, labels = scales::percent) +
@@ -197,7 +207,7 @@ ggplot(Indiana, aes(x = date, y = (difconfirmed / diftests))) +
 ggplot(Indiana, aes(x = date, y = difdeaths_per)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("Indiana New Confirmed Deaths per", per_word, "People")) + 
@@ -220,10 +230,10 @@ Note that the y-axis scales of these graphs are different than the state-level d
 ### Cases - Kosciusko
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
-ggplot(Kos, aes(x = date, y = difconfirmed_per)) + 
+ggplot(Kos, aes(x =  DATE, y = difconfirmed_per)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("Kosciusko New Confirmed Cases per", per_word, "People")) + 
@@ -240,10 +250,10 @@ ggplot(Kos, aes(x = date, y = difconfirmed_per)) +
 Note that if the number of deaths below is more than the official count according to Kosciusko county, that is most likely because our data source is also counting non-residents of Kosciusko county who have died in Koscisusko county.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
-ggplot(Kos, aes(x = date, y = difdeaths_per)) + 
+ggplot(Kos, aes(x = DATE, y = difdeaths_per)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("Kosciusko New Confirmed Deaths per", per_word, "People")) + 
@@ -261,12 +271,27 @@ ggplot(Kos, aes(x = date, y = difdeaths_per)) +
 The coloring scheme for the map below is based on a combination of new cases and new deaths per captita in the past week.  The coloring scheme is relative, it will always color the worst county pure red.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE}
+#Compute the Index for the map coloring
+Ind_trans <- Indices %>%
+  select(PRIM_LONG_DEC, PRIM_LAT_DEC, LOCATION_ID, COUNTY_NAME.x,
+         combined, Case_per, POSITIVE_TEST_RATE_MOVING_AVG) %>%
+  ungroup() %>%
+  mutate(labels = str_glue("{COUNTY_NAME.x}", "\n",
+                           "{round(Case_per,0)}", " & ",
+                           "{round(POSITIVE_TEST_RATE_MOVING_AVG,0)}", "%",
+                           sep = ""))
+  
+Ind_map <- usmap_transform(Ind_trans)
+
 plot_usmap("counties",
            data = Indices, values = "combined", color = "blue",
-           include = Indices$fips, labels = TRUE) + 
-    scale_fill_continuous(name = "Outbreak Index",
-                          low = "white", high = "red") + 
-    theme(legend.position = "right")
+           include = Indices$fips, labels = FALSE) + 
+    ggplot2::scale_fill_continuous(low = "white", high = "red") + 
+    theme(legend.position = "none") +
+    geom_text(data = Ind_map,
+              aes(x = PRIM_LONG_DEC.1,
+                  y = PRIM_LAT_DEC.1,
+                  label = labels))
 ```
 
 
@@ -281,11 +306,11 @@ Note that the y-axis scales of these graphs are different than other sections.
 The first chart is a comparison of smoothed weighted averages. The second chart is the actual data.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
-ggplot(IN_outbreak, aes(x = date,
+ggplot(IN_outbreak, aes(x = DATE,
                      y = difconfirmed_per, color = county)) + 
   stat_smooth(size = 2, se = FALSE, span = 5/3*weekspan) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
@@ -300,10 +325,10 @@ ggplot(IN_outbreak, aes(x = date,
 The chart below does not contain two outliers for Cass County.  On April 26th, Cass County reported 271 new cases (575 per 80,000), and on April 27th, Cass County reported 439 new cases (932 per 80,000).
 
 ```{r echo=FALSE, fig.width=12, fig.height=5, message = FALSE, warning=FALSE}
-ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) + 
+ggplot(IN_outbreak, aes(x = DATE, y = difconfirmed_per, color = county)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
 #Include if Cass is in  coord_cartesian(ylim = c(0,200)) +
@@ -325,11 +350,11 @@ ggplot(IN_outbreak, aes(x = date, y = difconfirmed_per, color = county)) +
 The first chart is a comparison of smoothed weighted averages. The second chart is the actual data.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
-ggplot(IN_outbreak, aes(x = date,
+ggplot(IN_outbreak, aes(x = DATE,
                      y = difdeaths_per, color = county)) + 
   stat_smooth(size = 2, se = FALSE, span = 5/3*weekspan) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
@@ -343,10 +368,10 @@ ggplot(IN_outbreak, aes(x = date,
 
 ```{r, echo=FALSE, fig.width = 12, fig.height = 5, message=FALSE, warning = FALSE}
 #Plot Deaths per Million per Day
-ggplot(IN_outbreak, aes(x = date, y = difdeaths_per, color = county)) + 
+ggplot(IN_outbreak, aes(x = DATE, y = difdeaths_per, color = county)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("Outbreaks - New Confirmed Deaths per", per_word, "People")) + 
@@ -378,11 +403,11 @@ n = length(KOS_neighbor_counties)
 m = match("Kosciusko", levels(KOS_plus$county)) - 1
 c_vals = append(gg_color_hue(n), "black", after = m)
 names(c_vals) <- levels(KOS_plus$county)
-ggplot(KOS_plus, aes(x = date,
+ggplot(KOS_plus, aes(x = DATE,
                      y = difconfirmed_per, color = county)) + 
   stat_smooth(size = 2, se = FALSE, span = 5/3*weekspan) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
@@ -399,10 +424,10 @@ ggplot(KOS_plus, aes(x = date,
 #Plot Confirmed per Million per Day
 #breaks <- 10^(-10:10)
 #minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
-ggplot(KOS_neighbors, aes(x = date, y = difconfirmed_per, color = county)) + 
+ggplot(KOS_neighbors, aes(x = DATE, y = difconfirmed_per, color = county)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
@@ -423,11 +448,11 @@ ggplot(KOS_neighbors, aes(x = date, y = difconfirmed_per, color = county)) +
 The first chart is a comparison of smoothed weighted averages.  The second chart is the actual data.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
-ggplot(KOS_plus, aes(x = date,
+ggplot(KOS_plus, aes(x = DATE,
                      y = difdeaths_per, color = county)) + 
   stat_smooth(size = 2, se = FALSE, span = 5/3*weekspan) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
@@ -444,10 +469,10 @@ ggplot(KOS_plus, aes(x = date,
 #Plot Confirmed per Million per Day
 #breaks <- 10^(-10:10)
 #minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
-ggplot(KOS_neighbors, aes(x = date, y = difdeaths_per, color = county)) + 
+ggplot(KOS_neighbors, aes(x = DATE, y = difdeaths_per, color = county)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
@@ -477,7 +502,7 @@ The first plot is a comparison of smoothed weighted averages.  The second is the
 IN_and_neighbors <- rbind(IN_neighbors, Indiana)
 ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = administrative_area_level_2)) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("New Confirmed Cases per Day per", per_word, "People")) + 
@@ -495,7 +520,7 @@ ggplot(IN_and_neighbors, aes(x = date, y = difconfirmed_per, color = administrat
 ggplot(IN_neighbors, aes(x = date, y = difconfirmed_per, color = administrative_area_level_2)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("New Confirmed Cases per Day per", per_word, "People")) + 
@@ -520,7 +545,7 @@ ggplot(IN_and_neighbors, aes(x = date,
   #stat_smooth(size = 2, se = FALSE, span = weekspan) +
   geom_line(size = 2) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(1,NA)) +
@@ -542,7 +567,7 @@ The first plot is a comparison of smoothed weighted averages.  The second is the
 #Plot Deaths per Million per Day
 ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = administrative_area_level_2)) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("New Confirmed Deaths per Day per", per_word, "People")) + 
@@ -560,7 +585,7 @@ ggplot(IN_and_neighbors, aes(x = date, y = difdeaths_per, color = administrative
 ggplot(IN_neighbors, aes(x = date, y = difdeaths_per, color = administrative_area_level_2)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("New Confirmed Deaths per Day per", per_word, "People")) + 
@@ -586,7 +611,7 @@ The first plot is a comparison of smoothed weighted averages.  The second is the
 #Plot Deaths per Million per Day
 ggplot(IN_and_neighbors, aes(x = date, y = (difconfirmed / diftests), color = administrative_area_level_2)) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   coord_cartesian(ylim = c(0,.5)) +
   scale_y_continuous(limit=c(0,NA),
@@ -609,7 +634,7 @@ Warning: the plots below contain several outliers where
 ggplot(IN_neighbors, aes(x = date, y = (difconfirmed / diftests), color = administrative_area_level_2)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   coord_cartesian(ylim = c(0,.5)) +
   scale_y_continuous(limit=c(0,NA),
@@ -659,7 +684,7 @@ ggplot(US_outbreak, aes(x = date,
                      y = difconfirmed_per, color = state)) + 
   stat_smooth(size = 2, se = FALSE, span = weekspan) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
@@ -675,7 +700,7 @@ ggplot(US_outbreak, aes(x = date,
 ggplot(US_outbreak, aes(x = date, y = difconfirmed_per, color = state)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("Outbreaks - New Confirmed Cases per", per_word, "People")) + 
@@ -700,7 +725,7 @@ ggplot(US_outbreak, aes(x = date,
   #stat_smooth(size = 2, se = FALSE, span = weekspan) +
   geom_line(size = 2) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
 #  scale_y_log10(breaks = breaks, minor_breaks = minor_breaks) + 
   scale_y_continuous(limit=c(1,NA)) +
@@ -725,7 +750,7 @@ ggplot(US_outbreak, aes(x = date,
                      y = difdeaths_per, color = state)) + 
   stat_smooth(size = 2, se = FALSE, span = weekspan) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="5 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA)) +
   ggtitle(paste("Outbreaks - New Deaths per", per_word, "People")) + 
@@ -740,7 +765,7 @@ ggplot(US_outbreak, aes(x = date,
 ggplot(US_outbreak, aes(x = date, y = difdeaths_per, color = state)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="6 days",
+               date_breaks  ="1 month",
                minor_breaks = "1 day") + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
   ggtitle(paste("Outbreaks - New Confirmed Deaths per", per_word, "People")) + 
@@ -757,7 +782,7 @@ ggplot(US_outbreak, aes(x = date, y = difdeaths_per, color = state)) +
 
 The coloring scheme for the map below is based on a combination of new confirmed cases per capita and new deaths per captita in the past week.  The coloring scheme is relative, it will always color the worst county pure red.
 
-```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE, warning=FALSE, results='hide', eval=FALSE}
 US_counties$difdeaths <- prepend(diff(US_counties$deaths), 0)
 US_counties$difconfirmed <- prepend(diff(US_counties$confirmed), 0)
 US_counties$diftests <- prepend(diff(US_counties$tests), 0)
