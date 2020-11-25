@@ -141,8 +141,6 @@ weekspan <- 3*7/(as.numeric(yest) - as.numeric(data_start)+2)
 
 ### Hospitalizations - Indiana
 
-According to Govenor Holcomb, the state of Indiana will be using hospitalization numbers as their most important indicator for this pandemic.
-
 Because hospitalizations are smoother than cases or deaths, we present the data with a line graph below:
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, message=FALSE, warning=FALSE}
@@ -268,7 +266,7 @@ ggplot(Kos, aes(x = DATE, y = difdeaths_per)) +
 
 # Indiana Outbreaks
 
-The coloring scheme for the map below is based on a combination of new cases and new deaths per captita in the past week.  The coloring scheme is relative, it will always color the worst county pure red.
+The coloring scheme for the map below is based on a combination of new cases per captita in the past week and positivity for unique indivuals in the previous week.  The coloring scheme is relative, it will always color the worst county pure red and the best county white.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE}
 #Compute the Index for the map coloring
