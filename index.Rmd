@@ -26,10 +26,10 @@ library(usmap)
 library(useful)
 
 #Update Grace Internal Data
-#fname = paste0('G:/Shared drives/Dashboard - COVID-19/Grace internal ',
-#              format(Sys.time(), '%Y-%m-%d'),
-#              '.pdf')
-#rmarkdown::render('Grace_internal2.Rmd', output_file = fname)
+fname = paste0('G:/Shared drives/Dashboard - COVID-19/Grace internal ',
+              format(Sys.time(), '%Y-%m-%d'),
+              '.pdf')
+rmarkdown::render('Grace_internal2.Rmd', output_file = fname)
 
 #Input parameters
 per = 8*10^4 #dislplay rates per how many people?
