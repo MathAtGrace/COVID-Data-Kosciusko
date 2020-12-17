@@ -197,7 +197,8 @@ ggplot(aes(x = DATE, y = value/100)) +
         legend.position = "bottom") + 
   ylab("Hospitalization Usage") + 
   xlab("Date") +
-  geom_vline(xintercept =  seq(as.Date("2020/4/1"), yest, "months"))
+  geom_vline(xintercept =  seq(as.Date("2020/4/1"), yest, "months")) +
+  geom_hline(yintercept = c(0,1))
 ```
 
 ### Cases - Indiana
