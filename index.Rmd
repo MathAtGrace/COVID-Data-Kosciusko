@@ -97,6 +97,8 @@ IN_hosp <- read_excel(tf) %>%
                                              "non_covid",
                                              "available")))
 
+#More Hospital Data
+
 
 #Add geographic and population data
 lat_and_long <- read_excel("lat_and_long.xlsx") %>%
@@ -818,11 +820,12 @@ ggplot(US_outbreak, aes(x = date, y = difdeaths_per, color = state)) +
   geom_vline(xintercept =  seq(as.Date("2020/4/1"), yest, "months"))
 ```
 
-# US outbreaks by county
-
-The coloring scheme for the map below is based on a combination of new confirmed cases per capita and new deaths per captita in the past week.  The coloring scheme is relative, it will always color the worst county pure red.
 
 ```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE, warning=FALSE, results='hide', eval=FALSE}
+# US outbreaks by county
+
+#The coloring scheme for the map below is based on a combination of new confirmed cases per capita and new deaths per captita in the past week.  The coloring scheme is relative, it will always color the worst county pure red.
+
 US_counties$difdeaths <- prepend(diff(US_counties$deaths), 0)
 US_counties$difconfirmed <- prepend(diff(US_counties$confirmed), 0)
 US_counties$diftests <- prepend(diff(US_counties$tests), 0)
