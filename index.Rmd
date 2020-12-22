@@ -24,12 +24,15 @@ library(zoo)
 library(data.table)
 library(usmap)
 library(useful)
+library(tidygeocoder)
+library(ggmap)
+library(gt)
 
 #Update Grace Internal Data
-fname = paste0('G:/Shared drives/Dashboard - COVID-19/Grace internal ',
-              format(Sys.time(), '%Y-%m-%d'),
-              '.pdf')
-rmarkdown::render('Grace_internal2.Rmd', output_file = fname)
+#fname = paste0('G:/Shared drives/Dashboard - COVID-19/Grace internal ',
+#              format(Sys.time(), '%Y-%m-%d'),
+#              '.pdf')
+#rmarkdown::render('Grace_internal2.Rmd', output_file = fname)
 
 #Input parameters
 per = 8*10^4 #dislplay rates per how many people?
@@ -98,26 +101,92 @@ IN_hosp <- read_excel(tf) %>%
                                              "available")))
 
 #More Hospital Data
+url = "https://healthdata.gov/sites/default/files/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20201215.csv"
+US_indiv_hosp <- read.csv(url) %>%
+  select(c(2:10, 22, 24, 26)) %>%
+  rename(total = total_icu_beds_7_day_avg,
+         used = icu_beds_used_7_day_avg,
+         covid = staffed_icu_adult_patients_confirmed_and_suspected_covid_7_day_avg,
+         fips = fips_code) %>%
+  mutate(covid = replace(covid, which(covid < 0L), 2), #Choosing 2 is arbitrary, but I don't think it will matter
+         used = replace(used, which(used < 0L), NA),    
+         total = replace(total, which(total < 0L), NA), 
+         fips = case_when(
+           str_length(fips) == 4 ~ str_pad(fips, width = 5, side = "left", pad = 0),
+           TRUE ~ as.character(fips))) %>%
+  filter(!is.na(used),
+         !is.na(total),
+         address != '',
+         ccn != '',
+         collection_week == max(collection_week)) %>%
+  mutate(used_pct = used/total,
+         cov_pct = covid/total) %>%
+  filter(used_pct > 0.9)
 
+#Commented out because it takes too long.  Join with 
+#US_indiv_hosp2 <- US_indiv_hosp %>%
+#  filter(!is.na(used),
+#         !is.na(total),
+#         address != '',
+#         ccn != '') %>%
+#  geocode(street = address,
+#          city = city,
+#          postalcode = zip,
+#          state = state) %>%
+#  filter(!is.na(lat))
+#View(US_indiv_hosp2)
+#save(US_indiv_hosp2, file = "hosps_coords.R")
+load("hosps_coords.R")
+
+#Find any hospitals from US_indiv_hosp that don't have lat-long data, and add it with Google geocode
+US_indiv_hosp2 <- US_indiv_hosp %>%
+  anti_join(US_indiv_hosp2, by = "ccn") %>%
+  add_row(address = "", city = "", state = "", zip = 0) %>%
+  mutate(location = str_glue("{address}, {city}, {state}, {zip}")) %>%
+  mutate_geocode(location) %>%
+  rename(long = lon) %>%
+  select(collection_week:covid, lat, long) %>%
+  rbind(US_indiv_hosp2) %>%
+  filter(!is.na(ccn))
+
+save(US_indiv_hosp2, file = "hosps_coords.R") #Save for next time
+
+
+
+US_indiv_hosp3 <- US_indiv_hosp2 %>%
+  select(ccn, lat, long) %>%
+  right_join(US_indiv_hosp, by = "ccn") %>%
+  relocate(long, lat) %>%
+  usmap_transform() %>%
+  mutate(used_pct = ifelse(used_pct > 1, 1, used_pct),
+         cov_pct = ifelse(cov_pct > 1, 1, cov_pct))
+
+IN_county_hosp <- US_indiv_hosp %>%
+  group_by(state, fips) %>%
+  summarise(total = sum(total, na.rm = TRUE),
+            used = sum(used, na.rm = TRUE),
+            covid = sum(covid, na.rm = TRUE)) %>%
+  mutate(cov_pct = covid/total,
+         non_pct = (used-covid)/total)
 
 #Add geographic and population data
 lat_and_long <- read_excel("lat_and_long.xlsx") %>%
   mutate(COUNTY_NUMERIC = COUNTY_NUMERIC + 18000)
 load("county_populations.RData")
-county_data <- merge(x = pops, y = lat_and_long,
-                     by.x = "key_numeric",
-                     by.y = "COUNTY_NUMERIC")
-IN_counties <- merge(x = IN_counties, y = county_data,
-                 by.x = "LOCATION_ID",
-                 by.y = "key_numeric")
-  
-#Compute per-population numbers
-IN_counties <- IN_counties %>%
+IN_counties <- pops %>%
+  full_join(y = lat_and_long,
+            by = c("key_numeric"="COUNTY_NUMERIC"))%>%
+  mutate(key_numeric = as.character(key_numeric))%>%
+  full_join(y = IN_counties,
+            by = c("key_numeric" = "LOCATION_ID")) %>%
+  #Compute per-population numbers
   mutate(confirmedper = COVID_COUNT / population * per,
          deathsper = COVID_DEATHS / population * per,
          difconfirmed_per = difconfirmed / population * per,
          difdeaths_per = difdeaths / population * per,
-         county = COUNTY_NAME.x)
+         county = COUNTY_NAME.x) %>%
+  left_join(y = IN_county_hosp,
+            by = c("key_numeric" = "fips"))
 
 Indices <- IN_counties %>%
   group_by(COUNTY_NAME.x) %>%
@@ -131,7 +200,7 @@ Indices <- IN_counties %>%
          positivity_index = POSITIVE_TEST_RATE_MOVING_AVG/sum(POSITIVE_TEST_RATE_MOVING_AVG),
          combined = sqrt(case_index * positivity_index),
          dashboard = Case_per/2 + POSITIVE_TEST_RATE_MOVING_AVG/10,
-         fips = LOCATION_ID)
+         fips = key_numeric)
  
 Indices <- Indices[order(-Indices$combined),]
 outbreaks <- Indices$COUNTY_NAME.x[1:6] 
@@ -202,6 +271,48 @@ ggplot(aes(x = DATE, y = value/100)) +
   geom_vline(xintercept =  seq(as.Date("2020/4/1"), yest, "months")) +
   geom_hline(yintercept = c(0,1))
 ```
+
+### Hospitals Accross the US with over 90% ICU beds in use
+
+```{r, echo=FALSE, fig.width=12, fig.height=6, message=FALSE, warning=FALSE}
+plot_usmap() +
+  geom_point(data = US_indiv_hosp3, aes(x = long.1, y = lat.1, size = total, color = cov_pct),
+             alpha = 1) +
+  labs(title = "US Hospitals above 90% Capacity of ICU Beds",
+       subtitle = "Source: https://healthdata.gov",
+       size = "ICU Beds", color = "COV19%") +
+  theme(legend.position = "right") +
+  scale_colour_gradient(low = "yellow", high = "red", labels = percent) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5)) 
+```
+
+
+
+```{r, echo=FALSE, fig.width=12, fig.height=6, message=FALSE, warning=FALSE}
+US_indiv_hosp %>%
+  filter(state %in% c("IN")) %>% #, "IL", "OH", "KY", "MI")) %>%
+  mutate(state = factor(state, levels = c("IN"))) %>% #, "MI", "OH", "IL", "KY")))%>%
+  select(hospital_name, city, total, used_pct, cov_pct) %>%
+  gt() %>%
+  tab_header(
+    title = "Hospitals in Indiana With Over 90% ICU Beds In Use",
+    subtitle = "The numbers below are all 7-day averages"
+  ) %>%
+  fmt_percent(
+    columns = vars(used_pct, cov_pct),
+    decimals = 0
+  ) %>%
+  tab_source_note(
+    source_note = "Source: https://healthdata.gov"
+  ) %>%
+  cols_label(hospital_name = "Hospital Name",
+             city = "City",
+             total = "Total ICU Beds",
+             used_pct = "Percent In Use",
+             cov_pct = "Percent COVID19")
+```
+
 
 ### Cases - Indiana
 
@@ -315,7 +426,7 @@ The coloring scheme for the map below is based on a combination of new cases per
 ```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE}
 #Compute the Index for the map coloring
 Ind_trans <- Indices %>%
-  select(PRIM_LONG_DEC, PRIM_LAT_DEC, LOCATION_ID, COUNTY_NAME.x,
+  select(PRIM_LONG_DEC, PRIM_LAT_DEC, key_numeric, COUNTY_NAME.x,
          combined, Case_per, POSITIVE_TEST_RATE_MOVING_AVG) %>%
   ungroup() %>%
   mutate(labels = str_glue("{COUNTY_NAME.x}", "\n",
@@ -336,7 +447,29 @@ plot_usmap("counties",
                   label = labels))
 ```
 
+```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE}
+#Compute the Index for the map coloring
+Ind_trans <- Indices %>%
+  select(PRIM_LONG_DEC, PRIM_LAT_DEC, key_numeric, COUNTY_NAME.x,
+         combined, Case_per, POSITIVE_TEST_RATE_MOVING_AVG) %>%
+  ungroup() %>%
+  mutate(labels = str_glue("{COUNTY_NAME.x}", "\n",
+                           "{round(Case_per,0)}", " & ",
+                           "{round(POSITIVE_TEST_RATE_MOVING_AVG,0)}", "%",
+                           sep = ""))
+  
+Ind_map <- usmap_transform(Ind_trans)
 
+plot_usmap("counties",
+           data = Indices, values = "combined", color = "blue",
+           include = Indices$fips, labels = FALSE) + 
+    ggplot2::scale_fill_continuous(low = "white", high = "red") + 
+    theme(legend.position = "none") +
+    geom_text(data = Ind_map,
+              aes(x = PRIM_LONG_DEC.1,
+                  y = PRIM_LAT_DEC.1,
+                  label = labels))
+```
 
 
 Below are the six counties in Indiana with the worst combination of new confirmed cases and new confirmed deaths over the past week.
@@ -440,7 +573,7 @@ The first chart is a comparison of smoothed weighted averages.  The second chart
 
 ```{r, echo=FALSE, fig.width=12, fig.height=5, warning=FALSE, message=FALSE}
 KOS_plus <- rbind(KOS_neighbors, Kos)
-KOS_plus$county <- droplevels(KOS_plus$county)
+KOS_plus$county <- droplevels(factor(KOS_plus$county))
 n = length(KOS_neighbor_counties)
 m = match("Kosciusko", levels(KOS_plus$county)) - 1
 c_vals = append(gg_color_hue(n), "black", after = m)
