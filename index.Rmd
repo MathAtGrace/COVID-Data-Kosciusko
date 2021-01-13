@@ -16,6 +16,7 @@ library(lubridate)
 library(scales)
 library(usmap)
 library(tigris)
+library(rmarkdown)
 library(tidyverse)
 library(readxl)
 library(httr)
@@ -26,6 +27,12 @@ library(useful)
 library(tidygeocoder)
 library(ggmap)
 library(gt)
+
+#Update Grace Internal Data
+#fname = paste0('G:/Shared drives/Dashboard - COVID-19/Grace internal ',
+#              format(Sys.time(), '%Y-%m-%d'),
+#              '.pdf')
+#rmarkdown::render('Grace_internal2.Rmd', output_file = fname)
 
 #Input parameters
 per = 8*10^4 #dislplay rates per how many people?
@@ -152,8 +159,7 @@ US_indiv_hosp3 <- US_indiv_hosp2 %>%
   relocate(long, lat) %>%
   usmap_transform() %>%
   mutate(used_pct = ifelse(used_pct > 1, 1, used_pct),
-         cov_pct = ifelse(cov_pct > 1, 1, cov_pct)) %>%
-  filter(state != "PR")
+         cov_pct = ifelse(cov_pct > 1, 1, cov_pct))
 
 IN_county_hosp <- US_indiv_hosp %>%
   group_by(state, fips) %>%
@@ -441,7 +447,7 @@ plot_usmap("counties",
                   label = labels))
 ```
 
-```{r, eval = FALSE, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE}
 #Compute the Index for the map coloring
 Ind_trans <- Indices %>%
   select(PRIM_LONG_DEC, PRIM_LAT_DEC, key_numeric, COUNTY_NAME.x,
