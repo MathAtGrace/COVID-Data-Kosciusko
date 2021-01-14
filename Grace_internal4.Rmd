@@ -7,13 +7,14 @@ header-includes:
 - \usepackage{graphicx}
 always_allow_html: true
 output:
-  pdf_document
+  pdf_document:
+    keep_tex: false
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
-                      #message = FALSE,
+                      message = FALSE,
                       fig.width = 13,
                       fig.height = 2,
                       results = "markdown")
@@ -25,7 +26,6 @@ library(readxl)
 library(scales)
 library(zoo)
 library(usmap)
-library(readxl)
 library(kableExtra)
 library(lubridate)
 
@@ -361,13 +361,17 @@ QE <- E_spring %>%
 QE_by_day <- QE %>%
   rename(Date = Quarantine) %>%
   rowwise() %>%
-  do(data.frame(.[1:2], Date = seq(.$Date, .$End_Date, by = "1 day")))
+  do(data.frame(.[1:2], Date = seq(.$Date, .$End_Date, by = "1 day"))) %>%
+  tibble()
 
 QE_yest <- QE_by_day %>%
+  #The line below is to create bogus data so that the summarization works
+  add_row(Last_Name = NA, First_Name = NA, Date = yest) %>%
+  filter(Date == yest) %>%
   group_by(Date, .drop = FALSE) %>%
   summarise(Quarantine = n()) %>%
-  ungroup()%>%
-  filter(Date == yest) %>%
+  ungroup() %>%
+  mutate(Quarantine = Quarantine-1) %>% #Correct for the bogus data
   mutate(Type = str_glue("Active on ", format(yest, "%a %b %d"))) %>%
   select(Type, Quarantine)
 
@@ -411,13 +415,17 @@ IE <- E_spring %>%
 
 IE_by_day <- IE%>%
   rowwise() %>%
-  do(data.frame(.[1:2], Date = seq(.$Isolated, .$End_Date, by = "1 day")))
+  do(data.frame(.[1:2], Date = seq(.$Isolated, .$End_Date, by = "1 day"))) %>%
+  tibble()
 
 IE_yest <- IE_by_day %>%
+  #The line below is to create bogus data so that the summarization works
+  add_row(Last_Name = NA, First_Name = NA, Date = yest) %>%
   filter(Date == yest) %>%
-  group_by(Date, .drop = FALSE)%>%
+  group_by(Date, .drop = FALSE) %>%
   summarise(Isolated = n()) %>%
-  ungroup()%>%
+  ungroup() %>%
+  mutate(Isolated = Isolated-1) %>% #Correct for the bogus data
   mutate(Type = str_glue("Active on ", format(yest, "%a %b %d"))) %>%
   select(Type, Isolated)
 
@@ -463,13 +471,17 @@ CE <- E_spring %>%
 
 CE_by_day <- CE %>%
   rowwise() %>%
-  do(data.frame(.[1:2], Test_Date = seq(.$Test_Date, .$End_Date, by = "1 day")))
+  do(data.frame(.[1:2], Test_Date = seq(.$Test_Date, .$End_Date, by = "1 day"))) %>%
+  tibble()
 
 CE_yest <- CE_by_day %>%
+  #The line below is to create bogus data so that the summarization works
+  add_row(Last_Name = NA, First_Name = NA, Test_Date = yest) %>%
   filter(Test_Date == yest) %>%
   group_by(Test_Date, .drop = FALSE) %>%
   summarise(Cases = n()) %>%
-  ungroup()%>%
+  ungroup() %>%
+  mutate(Cases = Cases-1) %>% #Correct for the bogus data
   mutate(Type = str_glue("Active on ", format(yest, "%a %b %d"))) %>%
   select(Type, Cases)
 
