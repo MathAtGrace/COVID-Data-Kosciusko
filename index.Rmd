@@ -287,7 +287,20 @@ plot_usmap() +
         plot.subtitle = element_text(hjust = 0.5)) 
 ```
 
-
+```{r, echo=FALSE, fig.width=12, fig.height=6, message=FALSE, warning=FALSE}
+IN_indiv_hosp <- US_indiv_hosp3 %>%
+  filter(state == "IN")
+plot_usmap(include = "IN") +
+  geom_point(data = IN_indiv_hosp, aes(x = long.1, y = lat.1, size = total, color = cov_pct),
+             alpha = 1) +
+  labs(title = "Indiana Hospitals above 90% Capacity of ICU Beds",
+       subtitle = "Source: https://healthdata.gov",
+       size = "ICU Beds", color = "COV19%") +
+  theme(legend.position = "right") +
+  scale_colour_gradient(low = "yellow", high = "red", labels = percent) + 
+  theme(plot.title = element_text(size= 20, hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5)) 
+```
 
 ```{r, echo=FALSE, fig.width=12, fig.height=6, message=FALSE, warning=FALSE}
 US_indiv_hosp %>%
@@ -447,29 +460,7 @@ plot_usmap("counties",
                   label = labels))
 ```
 
-```{r, echo=FALSE, fig.width=12, fig.height=14, warning=FALSE, message=FALSE}
-#Compute the Index for the map coloring
-Ind_trans <- Indices %>%
-  select(PRIM_LONG_DEC, PRIM_LAT_DEC, key_numeric, COUNTY_NAME.x,
-         combined, Case_per, POSITIVE_TEST_RATE_MOVING_AVG) %>%
-  ungroup() %>%
-  mutate(labels = str_glue("{COUNTY_NAME.x}", "\n",
-                           "{round(Case_per,0)}", " & ",
-                           "{round(POSITIVE_TEST_RATE_MOVING_AVG,0)}", "%",
-                           sep = ""))
-  
-Ind_map <- usmap_transform(Ind_trans)
 
-plot_usmap("counties",
-           data = Indices, values = "combined", color = "blue",
-           include = Indices$fips, labels = FALSE) + 
-    ggplot2::scale_fill_continuous(low = "white", high = "red") + 
-    theme(legend.position = "none") +
-    geom_text(data = Ind_map,
-              aes(x = PRIM_LONG_DEC.1,
-                  y = PRIM_LAT_DEC.1,
-                  label = labels))
-```
 
 
 Below are the six counties in Indiana with the worst combination of new confirmed cases and new confirmed deaths over the past week.
