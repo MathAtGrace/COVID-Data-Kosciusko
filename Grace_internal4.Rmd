@@ -121,11 +121,11 @@ QS <- S_spring %>%
   select(ID:First_Name, Location2, Q_type, Quarantine, End_Date)
 
 #Then total for each day
-QS_by_day <- QS %>%
+QS_days_fill <- QS %>%
   rowwise() %>%
   do(data.frame(.[1:5], Quarantine = seq(.$Quarantine, .$End_Date, by = "1 day")))
 
-QS_yest <- QS_by_day %>%
+QS_yest <- QS_days_fill %>%
   group_by(Quarantine, Location2, Q_type, .drop = FALSE) %>%
   summarise(n = n()) %>%
   filter(Quarantine == yest) %>%
@@ -190,7 +190,7 @@ QS_Tab <- bind_rows(QS_yest, QS_spring_total, QS_all_total, QS_all_unique) %>%
 
 
 #Maximum count needed for graphs
-mQS <- QS_by_day %>%
+mQS <- QS_days_fill %>%
   group_by(Quarantine, .drop = FALSE) %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
@@ -204,13 +204,13 @@ IS <- S_spring %>%
   #Don't count quarantines within 10 days of isolation, and change End Dates 
   select(ID:First_Name, Location2, Isolated, End_Date)
 
-IS_by_day <- IS%>%
+IS_days_fill <- IS%>%
   #DELETE THIS ROW ONCE DATA EXISTS
   add_row(Isolated = yest, End_Date = yest+1)%>%
   rowwise() %>%
   do(data.frame(.[1:4], Isolated = seq(.$Isolated, .$End_Date, by = "1 day")))
 
-IS_yest <- IS_by_day %>%
+IS_yest <- IS_days_fill %>%
   filter(Isolated == yest) %>%
   mutate(Location2 = factor(Location2,
                             levels = c("Grace", "Home")))%>%
@@ -261,7 +261,7 @@ IS_Tab <- bind_rows(IS_yest, IS_spring_total, IS_all_total, IS_all_unique) %>%
          at_Home = Home)
 
 #Maximum count needed for graphs
-mIS <- IS_by_day %>%
+mIS <- IS_days_fill %>%
   group_by(Isolated, .drop = FALSE) %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
@@ -284,13 +284,13 @@ CS <- S_spring %>%
   )) %>%
   select(ID:First_Name, Location2, Test_Date, End_Date)
 
-CS_by_day <- CS %>%
+CS_days_fill <- CS %>%
   #DELETE THE LINE BELOW ONCE ISOLATED DATA EXISTS
   add_row(ID = NA, First_Name = NA, Last_Name = NA, Location2 = NA, Test_Date = (yest), End_Date = (yest+1)) %>%
   rowwise() %>%
   do(data.frame(.[1:5], Test_Date = seq(.$Test_Date, .$End_Date, by = "1 day")))
 
-CS_yest <- CS_by_day %>%
+CS_yest <- CS_days_fill %>%
   filter(Test_Date == yest) %>%
   group_by(Test_Date, Location2, .drop = FALSE) %>%
   summarise(n = n())%>%
@@ -333,7 +333,7 @@ CS_Tab <- bind_rows(CS_yest, CS_spring_total, CS_all_total) %>%
          at_Home = Home)
 
 #Maximum count needed for graphs
-mCS <- CS_by_day %>%
+mCS <- CS_days_fill %>%
   group_by(Test_Date, .drop = FALSE) %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
@@ -358,13 +358,13 @@ QE <- E_spring %>%
   select(Last_Name:First_Name, Quarantine, End_Date)
 
 #Then total for each day
-QE_by_day <- QE %>%
+QE_days_fill <- QE %>%
   rename(Date = Quarantine) %>%
   rowwise() %>%
   do(data.frame(.[1:2], Date = seq(.$Date, .$End_Date, by = "1 day"))) %>%
   tibble()
 
-QE_yest <- QE_by_day %>%
+QE_yest <- QE_days_fill %>%
   #The line below is to create bogus data so that the summarization works
   add_row(Last_Name = NA, First_Name = NA, Date = yest) %>%
   filter(Date == yest) %>%
@@ -399,7 +399,7 @@ QE_Tab <- bind_rows(QE_yest, QE_spring_total, QE_all_total)
 
 
 #Maximum count needed for graphs
-mQE <- QE_by_day %>%
+mQE <- QE_days_fill %>%
   group_by(Date, .drop = FALSE) %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
@@ -413,12 +413,12 @@ IE <- E_spring %>%
   #Don't count quarantines within 10 days of isolation, and change End Dates 
   select(Last_Name:First_Name, Isolated, End_Date)
 
-IE_by_day <- IE%>%
+IE_days_fill <- IE%>%
   rowwise() %>%
   do(data.frame(.[1:2], Date = seq(.$Isolated, .$End_Date, by = "1 day"))) %>%
   tibble()
 
-IE_yest <- IE_by_day %>%
+IE_yest <- IE_days_fill %>%
   #The line below is to create bogus data so that the summarization works
   add_row(Last_Name = NA, First_Name = NA, Date = yest) %>%
   filter(Date == yest) %>%
@@ -446,7 +446,7 @@ IE_all_total <- E_all %>%
 IE_Tab <- bind_rows(IE_yest, IE_spring_total, IE_all_total)
 
 #Maximum count needed for graphs
-mIE <- IE_by_day %>%
+mIE <- IE_days_fill %>%
   group_by(Date, .drop = FALSE) %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
@@ -469,12 +469,12 @@ CE <- E_spring %>%
   )) %>%
   select(Last_Name:First_Name, Test_Date, End_Date)
 
-CE_by_day <- CE %>%
+CE_days_fill <- CE %>%
   rowwise() %>%
   do(data.frame(.[1:2], Test_Date = seq(.$Test_Date, .$End_Date, by = "1 day"))) %>%
   tibble()
 
-CE_yest <- CE_by_day %>%
+CE_yest <- CE_days_fill %>%
   #The line below is to create bogus data so that the summarization works
   add_row(Last_Name = NA, First_Name = NA, Test_Date = yest) %>%
   filter(Test_Date == yest) %>%
@@ -508,7 +508,7 @@ CE_all_total <- E_all %>%
 CE_Tab <- bind_rows(CE_yest, CE_spring_total, CE_all_total)
 
 #Maximum count needed for graphs
-mCE <- CE_by_day %>%
+mCE <- CE_days_fill %>%
   group_by(Test_Date, .drop = FALSE) %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
@@ -561,7 +561,7 @@ CS_Tab %>%
 
 ```{r student_cases_vis, eval=FALSE}
 adjust = 1
-CS_by_day %>%
+CS_days_fill %>%
   mutate(location = Location2) %>%
   ggplot(aes(x = Test_Date, fill = location)) + 
     geom_dotplot(method = "histodot",
@@ -603,7 +603,7 @@ CE_Tab %>%
 
 ```{r employee_cases_vis}
 adjust = 1
-CE_by_day %>%
+CE_days_fill %>%
   ggplot(aes(x = Test_Date, fill = "red")) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
@@ -647,7 +647,7 @@ IS_Tab %>%
 ```{r student_isolations_vis, eval=FALSE}
 adjust = 1
 cf = max(mIS+2, 5)
-IS_by_day %>%
+IS_days_fill %>%
   mutate(location = Location2) %>%
   ggplot(aes(x = Isolated, fill = location)) + 
     geom_dotplot(method = "histodot",
@@ -688,7 +688,7 @@ IE_Tab %>%
 
 ```{r employee_isolations_vis}
 cf = max(mIE+2, 5)
-IE_by_day %>%
+IE_days_fill %>%
   ggplot(aes(x = Date, fill = "red")) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
@@ -735,7 +735,7 @@ QS_Tab %>%
 ```{r student_quarantines_vis, fig.height=4}
 adjust = 1
 cf = max(mQS+2, 5)
-QS_by_day %>%
+QS_days_fill %>%
   mutate(location = Location2) %>%
   ggplot(aes(x = Quarantine, fill = location)) + 
     geom_dotplot(method = "histodot",
@@ -778,7 +778,7 @@ QE_Tab %>%
 ```{r employee_quarantines_vis}
 adjust = 1
 cf = max(mQE+2, 5)
-QE_by_day %>%
+QE_days_fill %>%
   ggplot(aes(x = Date, fill = "red")) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
