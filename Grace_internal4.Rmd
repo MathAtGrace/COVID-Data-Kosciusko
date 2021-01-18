@@ -15,7 +15,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
                       message = FALSE,
-                      fig.width = 13,
+                      fig.width = 12,
                       fig.height = 2,
                       results = "markdown")
 ```
@@ -40,6 +40,7 @@ K <- subset(IN_counties, IN_counties$COUNTY_NAME == "Kosciusko")
 #The first day of data
 fall <- as.Date("2020-07-20")
 spring <- as.Date("2021-01-01")
+#For fixing past reports: yest <- as.Date("2021-01-12")# 
 yest <- Sys.Date()-1
 last <- as.Date("2021-05-14")
 
@@ -52,15 +53,15 @@ S_all <- S %>%
     TRUE ~ "Grace"),
     levels = c("Home", "Grace"))) %>%
   #Fix different ways of entering positives and negatives
-  mutate(Test_Result = tolower(substring(S$Test_Result, 1, 1))) %>%
+  mutate(Test_Result = factor(tolower(substring(Test_Result, 1, 1)))) %>%
   #Fix positives that are not marked as isolated yet
   mutate(Isolated = case_when(
     Test_Result == "p" & is.na(Isolated) & !is.na(Quarantine) ~ Quarantine,
     TRUE ~ Isolated
   ))%>%
   #Filter only spring cases
-  filter(pmax(Quarantine, Isolated, TQS, na.rm = TRUE) > fall,
-         pmin(Quarantine, Isolated, TQS, na.rm = TRUE) <= yest) %>%
+  filter(pmax(Quarantine, Isolated, TQS, Result_Date, na.rm = TRUE) > fall,
+         pmin(Quarantine, Isolated, TQS, Result_Date, na.rm = TRUE) <= yest) %>%
   #Mark TQS as quarantine
   mutate(Q_type = factor(case_when(
     !is.na(TQS) ~ "travel",
@@ -70,12 +71,17 @@ S_all <- S %>%
   Quarantine = pmax(TQS, Quarantine, na.rm = TRUE))%>%
   #Add end dates when missing
   mutate(End_Date = case_when(
-    is.na(End_Date) & is.na(Ryan) ~ yest + 1,
+    is.na(End_Date) & is.na(Ryan) ~ yest,
     is.na(End_Date) ~ max(Quarantine, Isolated, Result_Date,
                           Test_Date, na.rm = TRUE) + 14,
-    End_Date > yest ~ yest + 1,
+    End_Date > yest ~ yest,
     TRUE ~ End_Date
-  ))
+  )) %>%
+  mutate(location = factor(case_when(
+    Q_type == "travel" ~ "Grace_travel",
+    Location2 == "Home" ~ "Home",
+    TRUE ~ "Grace"
+  ), levels = c("Grace", "Grace_travel", "Home")))
 
 S_spring <- S_all %>%
   filter(pmax(Quarantine, Isolated, TQS, na.rm = TRUE) > spring)
@@ -95,11 +101,12 @@ E_all <- E %>%
     TRUE ~ Quarantine
   )) %>%
   mutate(End_Date = case_when(
-    is.na(End_Date) ~ max(Quarantine, Isolated, Result_Date,
-                          Test_Date, na.rm = TRUE) + 14,
-    End_Date > yest ~ yest + 1,
+    is.na(End_Date) ~ min(max(Quarantine, Isolated, Result_Date,
+                          Test_Date, na.rm = TRUE) + 14, yest),
+    End_Date > yest ~ yest,
     TRUE ~ End_Date
-  ))
+  )) %>%
+  filter(pmin(Quarantine, Isolated, Result_Date, na.rm = TRUE) <= yest)
 
 E_spring <- E_all %>%
   filter(pmax(Quarantine, Isolated, na.rm = TRUE) > spring)
@@ -118,31 +125,37 @@ QS <- S_spring %>%
     !is.na(Isolated) & (abs(Quarantine - Isolated) < 10) & (Quarantine > Isolated) ~ as.Date(NA),
     TRUE ~ Quarantine)) %>%
   drop_na(Quarantine) %>%
-  select(ID:First_Name, Location2, Q_type, Quarantine, End_Date)
+  select(ID:First_Name, location, Quarantine, End_Date)
 
 #Then total for each day
 QS_days_fill <- QS %>%
   rowwise() %>%
-  do(data.frame(.[1:5], Quarantine = seq(.$Quarantine, .$End_Date, by = "1 day")))
+  do(data.frame(.[1:4], Quarantine = seq(.$Quarantine, .$End_Date, by = "1 day")))
 
-QS_yest <- QS_days_fill %>%
-  group_by(Quarantine, Location2, Q_type, .drop = FALSE) %>%
+#Note to self: the code paragraph below was for an atempt to create a spreadsheet detailing numbers.
+#However, I see no need to pursue that any further. -Ryan 1/15/21
+QS_by_day <- QS_days_fill %>%
+  group_by(Quarantine, location, .drop = FALSE) %>%
   summarise(n = n()) %>%
-  filter(Quarantine == yest) %>%
-  pivot_wider(names_from = c(Q_type, Location2), values_from = n) %>%
-  mutate(Total = travel_Grace + exposure_Grace + travel_Home + exposure_Home) %>%
+  pivot_wider(names_from = location, values_from = n)%>%
+  mutate(S_Total_Quar = Grace + Home + Grace_travel) %>%
   ungroup() %>%
+  rename(Date = Quarantine, S_Quar_Grace = Grace, S_Quar_Home = Home, S_Quar_Travel = Grace_travel)
+
+QS_yest <- QS_by_day %>%
+  filter(Date == yest) %>%
   mutate(Type = str_glue("Active on ", format(yest, "%a %b %d"))) %>%
-  select(Type, Total, travel_Grace, exposure_Grace, exposure_Home)
+  rename(Grace = S_Quar_Grace, Home = S_Quar_Home, Grace_travel = S_Quar_Travel, Total = S_Total_Quar) %>%
+  select(Type, Total, Home, Grace, Grace_travel)
 
 QS_spring_total <- QS %>%
-  group_by(Location2, Q_type, .drop = FALSE)%>%
+  group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
-  pivot_wider(names_from = c(Q_type, Location2), values_from = n) %>%
-  mutate(Total = travel_Grace + exposure_Grace + travel_Home + exposure_Home) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
+  mutate(Total = Grace + Home + Grace_travel) %>%
   ungroup() %>%
   mutate(Type = "Spring Semester Total") %>%
-  select(Type, Total, travel_Grace, exposure_Grace, exposure_Home)
+  select(Type, Total, Home, Grace, Grace_travel)
 
 QS_all_total <- S_all %>%
   filter(!is.na(Quarantine)) %>%
@@ -154,14 +167,14 @@ QS_all_total <- S_all %>%
     !is.na(Isolated) & (abs(Quarantine - Isolated) < 10) & (Quarantine > Isolated) ~ as.Date(NA),
     TRUE ~ Quarantine)) %>%
   drop_na(Quarantine) %>%
-  select(ID:First_Name, Location2, Q_type, Quarantine, End_Date) %>%
-  group_by(Location2, Q_type, .drop = FALSE)%>%
+  select(ID:First_Name, location, Quarantine, End_Date) %>%
+  group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
-  pivot_wider(names_from = c(Q_type, Location2), values_from = n) %>%
-  mutate(Total = travel_Grace + exposure_Grace + travel_Home + exposure_Home) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
+  mutate(Total = Grace + Home + Grace_travel) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Total") %>%
-  select(Type, Total, travel_Grace, exposure_Grace, exposure_Home)
+  select(Type, Total, Home, Grace, Grace_travel)
 
 QS_all_unique <- S_all %>%
   filter(!is.na(Quarantine)) %>%
@@ -173,20 +186,17 @@ QS_all_unique <- S_all %>%
     !is.na(Isolated) & (abs(Quarantine - Isolated) < 10) & (Quarantine > Isolated) ~ as.Date(NA),
     TRUE ~ Quarantine)) %>%
   drop_na(Quarantine) %>%
-  select(ID:First_Name, Location2, Q_type, Quarantine, End_Date) %>%
-  distinct(First_Name, Last_Name, Q_type, .keep_all = TRUE)%>%
-  group_by(Location2, Q_type, .drop = FALSE)%>%
+  select(ID:First_Name, location, Quarantine, End_Date) %>%
+  distinct(First_Name, Last_Name, location, .keep_all = TRUE)%>%
+  group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
-  pivot_wider(names_from = c(Q_type, Location2), values_from = n) %>%
-  mutate(Total = travel_Grace + exposure_Grace + travel_Home + exposure_Home) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
+  mutate(Total = Grace + Home + Grace_travel) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Unique Students") %>%
-  select(Type, Total, travel_Grace, exposure_Grace, exposure_Home)
+  select(Type, Total, Home, Grace, Grace_travel)
 
-QS_Tab <- bind_rows(QS_yest, QS_spring_total, QS_all_total, QS_all_unique) %>%
-  rename(from_travel = travel_Grace,
-         at_Grace = exposure_Grace,
-         at_Home = exposure_Home)
+QS_Tab <- bind_rows(QS_yest, QS_spring_total, QS_all_total, QS_all_unique)
 
 
 #Maximum count needed for graphs
@@ -202,7 +212,7 @@ mQS <- QS_days_fill %>%
 IS <- S_spring %>%
   filter(!is.na(Isolated)) %>%
   #Don't count quarantines within 10 days of isolation, and change End Dates 
-  select(ID:First_Name, Location2, Isolated, End_Date)
+  select(ID:First_Name, location, Isolated, End_Date)
 
 IS_days_fill <- IS%>%
   #DELETE THIS ROW ONCE DATA EXISTS
@@ -212,20 +222,20 @@ IS_days_fill <- IS%>%
 
 IS_yest <- IS_days_fill %>%
   filter(Isolated == yest) %>%
-  mutate(Location2 = factor(Location2,
+  mutate(location = factor(location,
                             levels = c("Grace", "Home")))%>%
-  group_by(Isolated, Location2, .drop = FALSE)%>%
+  group_by(Isolated, location, .drop = FALSE)%>%
   summarise(n = n())%>%
-  pivot_wider(names_from = Location2, values_from = n) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = str_glue("Active on ", format(yest, "%a %b %d"))) %>%
   select(Type, Total, Grace, Home)
 
 IS_spring_total <- IS %>%
-  group_by(Location2, .drop = FALSE)%>%
+  group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
-  pivot_wider(names_from = Location2, values_from = n) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "Spring Semester Total") %>%
@@ -234,10 +244,10 @@ IS_spring_total <- IS %>%
 IS_all_total <- S_all %>%
   filter(!is.na(Isolated)) %>%
   #Don't count quarantines within 10 days of isolation, and change End Dates 
-  select(ID:First_Name, Location2, Isolated, End_Date)%>%
-  group_by(Location2, .drop = FALSE)%>%
+  select(ID:First_Name, location, Isolated, End_Date)%>%
+  group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
-  pivot_wider(names_from = Location2, values_from = n) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Total") %>%
@@ -246,19 +256,17 @@ IS_all_total <- S_all %>%
 IS_all_unique <- S_all %>%
   filter(!is.na(Isolated)) %>%
   #Don't count quarantines within 10 days of isolation, and change End Dates 
-  select(ID:First_Name, Location2, Isolated, End_Date)%>%
+  select(ID:First_Name, location, Isolated, End_Date)%>%
   distinct(First_Name, Last_Name, .keep_all = TRUE)%>%
-  group_by(Location2, .drop = FALSE)%>%
+  group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
-  pivot_wider(names_from = Location2, values_from = n) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Unique Students") %>%
   select(Type, Total, Grace, Home)
 
-IS_Tab <- bind_rows(IS_yest, IS_spring_total, IS_all_total, IS_all_unique) %>%
-  rename(at_Grace = Grace,
-         at_Home = Home)
+IS_Tab <- bind_rows(IS_yest, IS_spring_total, IS_all_total, IS_all_unique)
 
 #Maximum count needed for graphs
 mIS <- IS_days_fill %>%
@@ -282,28 +290,28 @@ CS <- S_spring %>%
     !is.na(Quarantine) ~ Quarantine,
     TRUE ~ yest - 1  #No data defaults to 2 days ago
   )) %>%
-  select(ID:First_Name, Location2, Test_Date, End_Date)
+  select(ID:First_Name, location, Test_Date, End_Date)
 
 CS_days_fill <- CS %>%
   #DELETE THE LINE BELOW ONCE ISOLATED DATA EXISTS
-  add_row(ID = NA, First_Name = NA, Last_Name = NA, Location2 = NA, Test_Date = (yest), End_Date = (yest+1)) %>%
+  add_row(ID = NA, First_Name = NA, Last_Name = NA, location = NA, Test_Date = (yest), End_Date = (yest+1)) %>%
   rowwise() %>%
   do(data.frame(.[1:5], Test_Date = seq(.$Test_Date, .$End_Date, by = "1 day")))
 
 CS_yest <- CS_days_fill %>%
   filter(Test_Date == yest) %>%
-  group_by(Test_Date, Location2, .drop = FALSE) %>%
+  group_by(Test_Date, location, .drop = FALSE) %>%
   summarise(n = n())%>%
-  pivot_wider(names_from = Location2, values_from = n) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = str_glue("Active on ", format(yest, "%a %b %d"))) %>%
   select(Type, Total, Grace, Home)
 
 CS_spring_total <- CS %>%
-  group_by(Location2, .drop = FALSE)%>%
+  group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
-  pivot_wider(names_from = Location2, values_from = n) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "Spring Semester Total") %>%
@@ -319,18 +327,16 @@ CS_all_total <- S_all %>%
     !is.na(Quarantine) ~ Quarantine,
     TRUE ~ yest - 1  #No data defaults to 2 days ago
   )) %>%
-  select(ID:First_Name, Location2, Test_Date, End_Date)%>%
-  group_by(Location2, .drop = FALSE)%>%
+  select(ID:First_Name, location, Test_Date, End_Date)%>%
+  group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
-  pivot_wider(names_from = Location2, values_from = n) %>%
+  pivot_wider(names_from = location, values_from = n) %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Total") %>%
   select(Type, Total, Grace, Home)
 
-CS_Tab <- bind_rows(CS_yest, CS_spring_total, CS_all_total) %>%
-  rename(at_Grace = Grace,
-         at_Home = Home)
+CS_Tab <- bind_rows(CS_yest, CS_spring_total, CS_all_total)
 
 #Maximum count needed for graphs
 mCS <- CS_days_fill %>%
@@ -521,8 +527,8 @@ gg_color_hue <- function(n) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
-c_vals = gg_color_hue(2)
-names(c_vals) <- rev(levels(S$Location2))
+c_vals = gg_color_hue(3)
+names(c_vals) <- rev(levels(S_all$location))
 
 ```
 
@@ -538,8 +544,6 @@ names(c_vals) <- rev(levels(S$Location2))
 
 Notes and Irregularities:
 
-  - Quarantined from international travel are a subcategory of students quarantined at Grace.
-
 \newpage
 
 # Cases
@@ -547,11 +551,9 @@ Notes and Irregularities:
 
 ### Confirmed Cases Among Students
 
-As of yesterday, Grace College had
-
 ```{r student_cases_table}
 CS_Tab %>%
-  select(Type, Total, at_Home, at_Grace)%>%
+  select(Type, Total, Home, Grace)%>%
   kbl(caption = "Student Cases", booktabs = TRUE, format = "latex") %>%
   kable_styling(latex_options = "striped")%>%
   kable_styling(latex_options = "hold_position")
@@ -562,7 +564,6 @@ CS_Tab %>%
 ```{r student_cases_vis, eval=FALSE}
 adjust = 1
 CS_days_fill %>%
-  mutate(location = Location2) %>%
   ggplot(aes(x = Test_Date, fill = location)) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
@@ -570,7 +571,7 @@ CS_days_fill %>%
                  dotsize = 0.75,
                  stackratio = adjust) +
     scale_x_date(date_labels="%b %d",
-                 date_breaks  ="1 month",
+                 date_breaks  = "7 days",
                  minor_breaks = "1 day",
                  limits = c(spring, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
@@ -583,14 +584,12 @@ CS_days_fill %>%
     ylab("Students") + 
     xlab("Date")+
     geom_hline(yintercept =  seq(0, mCS, 10)/mCS, linetype = "dotted")+
-    annotate("text", x = spring,
-             y = seq(0, mCS, 10)/mCS, label = seq(0, mCS, 10))+
-    geom_vline(xintercept =  seq(spring, last, "months"))
+    geom_vline(xintercept =  seq(spring, last, "months"))#+
+#    annotate("text", x = spring+2,
+#             y = seq(11, mCS, 10)/cf, label = seq(10, mCS, 10))
 ```
 
 ### Confirmed Cases Among Employees
-
-As of yesterday, Grace College had
 
 ```{r employee_cases_table}
 CE_Tab %>%
@@ -610,7 +609,7 @@ CE_days_fill %>%
                  stackgroups = TRUE,
                  dotsize = 1) +
     scale_x_date(date_labels="%b %d",
-                 date_breaks  ="1 month",
+                 date_breaks  = "7 days",
                  minor_breaks = "1 day",
                  limits = c(spring, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
@@ -623,9 +622,9 @@ CE_days_fill %>%
     xlab("Date") +
     theme(legend.position = "none")+
     geom_hline(yintercept =  seq(0, mCE, 10)/mCE, linetype = "dotted")+
-    annotate("text", x = spring,
-             y = seq(0, mCE, 10)/mCE, label = seq(0, mCE, 10))+
-    geom_vline(xintercept =  seq(spring, last, "months"))
+    geom_vline(xintercept =  seq(spring, last, "months"))#+
+#    annotate("text", x = spring+2,
+#             y = seq(11, mCE, 10)/cf, label = seq(10, mCE, 10))
 ```
 
 \newpage
@@ -636,7 +635,7 @@ CE_days_fill %>%
 
 ```{r studend_isolations_table}
 IS_Tab %>%
-  select(Type, Total, at_Home, at_Grace) %>%
+  select(Type, Total, Home, Grace) %>%
   kbl(caption = "Student Isolations",
         booktabs = T, format = "latex") %>%
   kable_styling(latex_options = "striped")%>%
@@ -648,7 +647,6 @@ IS_Tab %>%
 adjust = 1
 cf = max(mIS+2, 5)
 IS_days_fill %>%
-  mutate(location = Location2) %>%
   ggplot(aes(x = Isolated, fill = location)) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
@@ -656,7 +654,7 @@ IS_days_fill %>%
                  dotsize = 1,
                  stackratio = 1) + #was adjust
     scale_x_date(date_labels="%b %d",
-                 date_breaks  ="1 month",
+                 date_breaks  = "7 days",
                  minor_breaks = "1 day",
                  limits = c(spring, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
@@ -667,16 +665,13 @@ IS_days_fill %>%
     theme(plot.title = element_text(hjust = 0.5),
           legend.text = element_text(size = 15)) + 
     ylab("Students") + 
-    xlab("Date") #+
-#    geom_hline(yintercept =  seq(0, mIS, 10)/cf, linetype = "dotted")+
-#    annotate("text", x = first,
-#             y = seq(0, mIS, 10)/cf, label = seq(0, mIS, 10))+
-#    geom_vline(xintercept =  seq(spring, last, "months"))
+    xlab("Date")+
+    geom_vline(xintercept =  seq(spring, last, "months"))#+
+#    annotate("text", x = spring+2,
+#             y = seq(11, mIS, 10)/cf, label = seq(10, mIS, 10))
 ```
 
 ### Isolated Employees
-
-As of yesterday, Grace College had
 
 ```{r, employee_isolations_table}
 IE_Tab %>%
@@ -694,7 +689,7 @@ IE_days_fill %>%
                  binwidth = 1,
                  stackgroups = TRUE) +
     scale_x_date(date_labels="%b %d",
-                 date_breaks  ="1 month",
+                 date_breaks  = "7 days",
                  minor_breaks = "1 day",
                  limits = c(spring, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
@@ -706,10 +701,10 @@ IE_days_fill %>%
     ylab("Employees") + 
     xlab("Date") +
     theme(legend.position = "none") +
-    geom_hline(yintercept =  seq(0, mIE, 10)/cf, linetype = "dotted")#+
-#    annotate("text", x = first,
-#             y = seq(1, mIE+1, 10)/cf, label = seq(0, mIE, 10))+
-#    geom_vline(xintercept =  seq(spring, last, "months"))
+    geom_hline(yintercept =  seq(0, mIE, 10)/cf, linetype = "dotted")+
+    geom_vline(xintercept =  seq(spring, last, "months"))#+
+#    annotate("text", x = spring+2,
+#             y = seq(11, mIE, 10)/cf, label = seq(10, mIE, 10))
 ```
 
 \newpage
@@ -718,12 +713,11 @@ IE_days_fill %>%
 
 ### Quarantined Students
 
-In the table below, `from_travel` is a subcategory of `at_Grace`.
+In the table and graph below, `Grace_travel` are quarentines from international travel, and are not counted among the category `Grace`.  This is because they are quarantining because of travel, not exposure.
 
 ```{r student_quarantines_table}
 QS_Tab %>%
-  mutate(at_Grace = at_Grace + from_travel) %>%
-  select(Type, Total, at_Home, at_Grace, from_travel) %>%
+  select(Type, Total, Home, Grace, Grace_travel) %>%
   kable(caption = "Student Quarantines",
         booktabs = T, format = "latex") %>%
   kable_styling(latex_options = "striped")%>%
@@ -734,9 +728,8 @@ QS_Tab %>%
 
 ```{r student_quarantines_vis, fig.height=4}
 adjust = 1
-cf = max(mQS+2, 5)
+cf = max(mQS, 5)
 QS_days_fill %>%
-  mutate(location = Location2) %>%
   ggplot(aes(x = Quarantine, fill = location)) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
@@ -744,7 +737,7 @@ QS_days_fill %>%
                  dotsize = 1,
                  stackratio = adjust) +
     scale_x_date(date_labels="%b %d",
-                 date_breaks  ="1 month",
+                 date_breaks  ="7 days",
                  minor_breaks = "1 day",
                  limits = c(spring, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
@@ -758,14 +751,12 @@ QS_days_fill %>%
     ylab("Students") + 
     xlab("Date") +
     geom_hline(yintercept =  seq(0, mQS, 10)/cf, linetype = "dotted")+
+    geom_vline(xintercept =  seq(spring, last, "months"))+
     annotate("text", x = spring+2,
-             y = seq(1, mQS, 10)/cf, label = seq(0, mQS, 10))+
-      geom_vline(xintercept =  seq(spring, last, "months"))
+             y = seq(11, mQS, 10)/cf, label = seq(10, mQS, 10))
 ```
 
 ### Quarantined Employees
-
-As of yesterday, Grace College had
 
 ```{r employee_quarantines_table}
 QE_Tab %>%
@@ -786,7 +777,7 @@ QE_days_fill %>%
                  dotsize = 1,
                  stackratio = adjust) +
     scale_x_date(date_labels="%b %d",
-                 date_breaks  ="1 month",
+                 date_breaks  = "7 days",
                  minor_breaks = "1 day",
                  limits = c(spring, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
@@ -798,10 +789,10 @@ QE_days_fill %>%
     ylab("Employees") + 
     xlab("Date") +
     theme(legend.position = "none") +
-    geom_hline(yintercept =  seq(0, mQE, 10)/cf, linetype = "dotted")#+
+    geom_hline(yintercept =  seq(0, mQE, 10)/cf, linetype = "dotted")+
+    geom_vline(xintercept =  seq(spring, last, "months"))#+
  #   annotate("text", x = first,
- #            y = seq(1, mQE+1, 10)/cf, label = seq(0, mQE, 10))+
- #     geom_vline(xintercept =  seq(spring, last, "months"))
+ #            y = seq(1, mQE+1, 10)/cf, label = seq(0, mQE, 10))
 ```
 
 
@@ -854,7 +845,7 @@ Kosciusko County has had
 ggplot(K, aes(x = DATE, y = COVID_COUNT)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="1 month",
+               date_breaks  = "7 days",
                minor_breaks = "1 day",
                limits = c(cfirst, clast)) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
@@ -877,7 +868,7 @@ Kosciusko County has had `r subset(K, DATE == yest - 7)$POSITIVE_TEST_RATE_MOVIN
 ggplot(subset(K, DATE < yest - 6), aes(x = DATE, y = POSITIVE_TEST_RATE_MOVING_AVG/100)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="1 month",
+               date_breaks  = "7 days",
                minor_breaks = "1 day",
                limits = c(cfirst, clast)) + 
   scale_y_continuous(labels = scales::percent_format(accuracy = 1),
@@ -910,7 +901,7 @@ Indiana has had
 ggplot(I, aes(x = DATE, y = COVID_COUNT * 79456/6732000)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="1 month",
+               date_breaks  = "7 days",
                minor_breaks = "1 day",
                limits = c(cfirst, clast)) + 
   scale_y_continuous(limit=c(0,NA), oob = squish) +
@@ -931,7 +922,7 @@ Indiana reports a `r round(subset(I, DATE == yest - 7)$POSITIVITY_RATE_ALL_TESTS
 ggplot(subset(I, DATE <= yest - 7), aes(x = DATE, y = POSITIVITY_RATE_ALL_TESTS/100)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
-               date_breaks  ="1 month",
+               date_breaks  = "7 days",
                minor_breaks = "1 day",
                limits = c(cfirst, clast)) + 
   scale_y_continuous(labels = scales::percent_format(accuracy = 1),
