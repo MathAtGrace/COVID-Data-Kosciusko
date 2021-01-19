@@ -40,7 +40,7 @@ K <- subset(IN_counties, IN_counties$COUNTY_NAME == "Kosciusko")
 #The first day of data
 fall <- as.Date("2020-07-20")
 spring <- as.Date("2021-01-01")
-#For fixing past reports: yest <- as.Date("2021-01-12")# 
+#yest <- as.Date("2021-01-15")# 
 yest <- Sys.Date()-1
 last <- as.Date("2021-05-14")
 
@@ -57,6 +57,8 @@ S_all <- S %>%
   #Fix positives that are not marked as isolated yet
   mutate(Isolated = case_when(
     Test_Result == "p" & is.na(Isolated) & !is.na(Quarantine) ~ Quarantine,
+    Test_Result == "p" & is.na(Isolated) & !is.na(Test_Date) ~ Test_Date,
+    Test_Result == "p" & is.na(Isolated) & !is.na(Result_Date) ~ Result_Date,
     TRUE ~ Isolated
   ))%>%
   #Filter only spring cases
@@ -71,9 +73,8 @@ S_all <- S %>%
   Quarantine = pmax(TQS, Quarantine, na.rm = TRUE))%>%
   #Add end dates when missing
   mutate(End_Date = case_when(
-    is.na(End_Date) & is.na(Ryan) ~ yest,
-    is.na(End_Date) ~ max(Quarantine, Isolated, Result_Date,
-                          Test_Date, na.rm = TRUE) + 14,
+    is.na(End_Date) | is.na(Complete) ~ min(max(Quarantine, Isolated, Result_Date,
+                          Test_Date, na.rm = TRUE) + 14, yest),
     End_Date > yest ~ yest,
     TRUE ~ End_Date
   )) %>%
@@ -101,15 +102,21 @@ E_all <- E %>%
     TRUE ~ Quarantine
   )) %>%
   mutate(End_Date = case_when(
-    is.na(End_Date) ~ min(max(Quarantine, Isolated, Result_Date,
+    is.na(End_Date) | is.na(Complete) ~ min(max(Quarantine, Isolated, Result_Date,
                           Test_Date, na.rm = TRUE) + 14, yest),
     End_Date > yest ~ yest,
     TRUE ~ End_Date
   )) %>%
+  mutate(Isolated = case_when(
+    Test_Result == "p" & is.na(Isolated) & !is.na(Quarantine) ~ Quarantine,
+    Test_Result == "p" & is.na(Isolated) & !is.na(Test_Date) ~ Test_Date,
+    Test_Result == "p" & is.na(Isolated) & !is.na(Result_Date) ~ Result_Date,
+    TRUE ~ Isolated
+  ))%>%
   filter(pmin(Quarantine, Isolated, Result_Date, na.rm = TRUE) <= yest)
 
 E_spring <- E_all %>%
-  filter(pmax(Quarantine, Isolated, na.rm = TRUE) > spring)
+  filter(pmax(Quarantine, Isolated, Test_Date, Result_Date, na.rm = TRUE) > spring)
 
 ##############################################################################
 #Student Quarantine
@@ -543,6 +550,8 @@ names(c_vals) <- rev(levels(S_all$location))
 \vspace{2 in}
 
 Notes and Irregularities:
+
+  - This report assumes that any student or employee that has not been marked "complete" on the contact tracing spreadsheet is active for 2 weeks, and thus it may undercount active cases that last more than two weeks and overcount active cases when contact tracers fall behind completing cases.  Each case will be automatically corrected once it has been completed and is no longer active.
 
 \newpage
 
