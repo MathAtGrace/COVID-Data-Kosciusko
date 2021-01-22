@@ -523,6 +523,71 @@ mCE <- CE_days_fill %>%
   .$n
 
 #########################################################################
+#Testing Data
+
+#Join with other testing data
+T2 <- S_spring %>%
+  select(ID, Test_Date, Test_Result) %>%
+  drop_na() %>%
+  mutate(At_Health_Center = TRUE) %>%
+  full_join(T)
+
+#All Reported
+TA <- T2 %>%
+  group_by(Test_Result) %>%
+  count() %>%
+  pivot_wider(names_from = Test_Result, values_from = n) %>%
+  mutate(Type = "Total: All Reported",
+         Total = n + p,
+         Percent = percent(case_when(
+           Total == 0 ~ 0,
+           TRUE ~ p/Total
+         ))) %>%
+  select(Type, Total, Percent)
+
+#Weekly  
+TW <- T2 %>%
+  filter(!At_Health_Center) %>%
+  group_by(Test_Result, .drop = FALSE) %>%
+  count() %>%
+  pivot_wider(names_from = Test_Result, values_from = n) %>%
+  mutate(Type = "Total: All Weekly",
+         Total = n + p,
+         Percent = percent(case_when(
+           Total == 0 ~ 0,
+           TRUE ~ p/Total
+         ))) %>%
+  select(Type, Total, Percent)
+
+#Past Week ALl Reported
+PTA <- T2 %>%
+  filter(Test_Date > yest - 7) %>%
+  group_by(Test_Result, .drop = FALSE) %>%
+  count() %>%
+  pivot_wider(names_from = Test_Result, values_from = n) %>%
+  mutate(Type = "Past Week: All Reported",
+         Total = n + p,
+         Percent = percent(case_when(
+           Total == 0 ~ 0,
+           TRUE ~ p/Total
+         ))) %>%
+  select(Type, Total, Percent)
+
+#Past Week ALl Weekly
+PTW <- T2 %>%
+  filter(!At_Health_Center & Test_Date > yest - 7) %>%
+  group_by(Test_Result, .drop = FALSE) %>%
+  count() %>%
+  pivot_wider(names_from = Test_Result, values_from = n) %>%
+  mutate(Type = "Past Week: All Weekly",
+         Total = n + p,
+         Percent = percent(case_when(
+           Total == 0 ~ 0,
+           TRUE ~ p/Total
+         ))) %>%
+  select(Type, Total, Percent)
+
+T_Tab <- bind_rows(PTW, PTA, TW, TA)
 
 #Colors used for graphs
 gg_color_hue <- function(n) {
