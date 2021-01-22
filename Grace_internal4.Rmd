@@ -29,9 +29,11 @@ library(usmap)
 library(kableExtra)
 library(lubridate)
 library(RcppRoll)
+library(janitor)
 
 #Load Student and Employee Data
-load("S.Rdata")
+load("SF.Rdata")
+load("SS.Rdata")
 load("E.Rdata")
 load("IN.Rdata")
 load("I.Rdata")
@@ -45,6 +47,10 @@ spring <- as.Date("2021-01-01")
 #yest <- as.Date("2021-01-15")# 
 yest <- Sys.Date()-1
 last <- as.Date("2021-05-15")
+
+S_spring %>%
+  clean_names() %>%
+  View()
 
 S_all <- S %>%
   #Determine Home or Grace
