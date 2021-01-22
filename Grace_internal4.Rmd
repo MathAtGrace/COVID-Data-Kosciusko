@@ -28,6 +28,7 @@ library(zoo)
 library(usmap)
 library(kableExtra)
 library(lubridate)
+library(RcppRoll)
 
 #Load Student and Employee Data
 load("S.Rdata")
@@ -537,7 +538,7 @@ TA <- T2 %>%
   group_by(Test_Result) %>%
   count() %>%
   pivot_wider(names_from = Test_Result, values_from = n) %>%
-  mutate(Type = "Total: All Reported",
+  mutate(Type = "Spring: All Reported",
          Total = n + p,
          Percent = percent(case_when(
            Total == 0 ~ 0,
@@ -551,7 +552,7 @@ TW <- T2 %>%
   group_by(Test_Result, .drop = FALSE) %>%
   count() %>%
   pivot_wider(names_from = Test_Result, values_from = n) %>%
-  mutate(Type = "Total: All Weekly",
+  mutate(Type = "Spring: All Weekly",
          Total = n + p,
          Percent = percent(case_when(
            Total == 0 ~ 0,
@@ -588,6 +589,38 @@ PTW <- T2 %>%
   select(Type, Total, Percent)
 
 T_Tab <- bind_rows(PTW, PTA, TW, TA)
+
+TbyD <- T2 %>%
+  mutate(At_Health_Center = factor(At_Health_Center)) %>%
+  group_by(Test_Date, At_Health_Center, Test_Result, .drop = FALSE) %>%
+  count() %>%
+  group_by(Test_Result, At_Health_Center) %>%
+  complete(Test_Date = seq.Date(as.Date("2021-01-12"), yest, by = "day"),
+           fill = list(n = 0))%>%
+  pivot_wider(names_from = Test_Result, values_from = n) %>%
+  mutate(n = roll_sumr(n, 7, fill = NA),
+         p = roll_sumr(p, 7, fill = NA)) %>%
+  drop_na()
+
+TbyDA <- TbyD %>%
+  group_by(Test_Date) %>%
+  summarise(n = sum(n), p = sum(p)) %>%
+  ungroup() %>%
+  mutate(Type = "All Reported")
+
+TbyDW <- TbyD %>%
+  filter(At_Health_Center == "FALSE") %>%
+  ungroup() %>%
+  mutate(Type = "Only Weekly") %>%
+  select(Type, Test_Date, n, p)
+
+T_Pos <- bind_rows(TbyDA, TbyDW) %>%
+  mutate(Total = n + p,
+         Percent = percent(case_when(
+           Total == 0 ~ 0,
+           TRUE ~ p/Total
+         ))) %>%
+  select(-n, -p)
 
 #Colors used for graphs
 gg_color_hue <- function(n) {
@@ -701,6 +734,21 @@ CE_days_fill %>%
 #    annotate("text", x = spring+2,
 #             y = seq(11, mCE, 10)/cf, label = seq(10, mCE, 10))
 ```
+
+\newpage
+
+#Testing
+
+```{r testing_table}
+T_Tab %>%
+  kbl(caption = "Student Testing",
+      booktabs = TRUE, format = "latex",
+      col.names = c("Type", "Tests", "Percent Postive"),
+      align = c('l','r','r')) %>%
+  kable_styling(latex_options = "striped")%>%
+  kable_styling(latex_options = "hold_position")
+```
+
 
 \newpage
 
