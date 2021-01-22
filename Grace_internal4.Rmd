@@ -34,6 +34,7 @@ load("S.Rdata")
 load("E.Rdata")
 load("IN.Rdata")
 load("I.Rdata")
+load("T.Rdata")
 
 K <- subset(IN_counties, IN_counties$COUNTY_NAME == "Kosciusko")
 
@@ -82,7 +83,7 @@ S_all <- S %>%
     Q_type == "travel" ~ "Grace_travel",
     Location2 == "Home" ~ "Home",
     TRUE ~ "Grace"
-  ), levels = c("Grace", "Grace_travel", "Home")))
+  ), levels = c("Home", "Grace_travel", "Grace")))
 
 S_spring <- S_all %>%
   filter(pmax(Quarantine, Isolated, TQS, na.rm = TRUE) > spring)
@@ -222,8 +223,6 @@ IS <- S_spring %>%
   select(ID:First_Name, location, Isolated, End_Date)
 
 IS_days_fill <- IS%>%
-  #DELETE THIS ROW ONCE DATA EXISTS
-  add_row(Isolated = yest, End_Date = yest+1)%>%
   rowwise() %>%
   do(data.frame(.[1:4], Isolated = seq(.$Isolated, .$End_Date, by = "1 day")))
 
@@ -300,10 +299,8 @@ CS <- S_spring %>%
   select(ID:First_Name, location, Test_Date, End_Date)
 
 CS_days_fill <- CS %>%
-  #DELETE THE LINE BELOW ONCE ISOLATED DATA EXISTS
-  add_row(ID = NA, First_Name = NA, Last_Name = NA, location = NA, Test_Date = (yest), End_Date = (yest+1)) %>%
   rowwise() %>%
-  do(data.frame(.[1:5], Test_Date = seq(.$Test_Date, .$End_Date, by = "1 day")))
+  do(data.frame(.[1:4], Test_Date = seq(.$Test_Date, .$End_Date, by = "1 day")))
 
 CS_yest <- CS_days_fill %>%
   filter(Test_Date == yest) %>%
@@ -432,8 +429,6 @@ IE_days_fill <- IE%>%
   tibble()
 
 IE_yest <- IE_days_fill %>%
-  #The line below is to create bogus data so that the summarization works
-  add_row(Last_Name = NA, First_Name = NA, Date = yest) %>%
   filter(Date == yest) %>%
   group_by(Date, .drop = FALSE) %>%
   summarise(Isolated = n()) %>%
@@ -551,7 +546,12 @@ names(c_vals) <- rev(levels(S_all$location))
 
 Notes and Irregularities:
 
-  - This report assumes that any student or employee that has not been marked "complete" on the contact tracing spreadsheet is active for 2 weeks, and thus it may undercount active cases that last more than two weeks and overcount active cases when contact tracers fall behind completing cases.  Each case will be automatically corrected once it has been completed and is no longer active.
+  - (1/21) As students report positive tests before coming to campus, this report will update all past days
+that those students have been sick according to the information the students give to contact tracers.
+  - (1/17) This report assumes that any student or employee that has not been marked “complete” on the
+contact tracing spreadsheet is active for 2 weeks, and thus it may undercount active cases that last
+more than two weeks and overcount active cases when contact tracers fall behind completing cases.
+Each case will be automatically corrected once it has been completed and is no longer active.
 
 \newpage
 
@@ -570,14 +570,14 @@ CS_Tab %>%
 
 
 
-```{r student_cases_vis, eval=FALSE}
+```{r student_cases_vis}
 adjust = 1
 CS_days_fill %>%
   ggplot(aes(x = Test_Date, fill = location)) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
                  stackgroups = TRUE,
-                 dotsize = 0.75,
+                 dotsize = 1,
                  stackratio = adjust) +
     scale_x_date(date_labels="%b %d",
                  date_breaks  = "7 days",
@@ -589,7 +589,8 @@ CS_days_fill %>%
     coord_fixed(ratio = max(mCS,5)) +
     ggtitle("Active Confirmed Cases Among Students Each Day") + 
     theme(plot.title = element_text(hjust = 0.5),
-          legend.text = element_text(size = 15)) + 
+          legend.text = element_text(size = 15),
+          legend.position="bottom") + 
     ylab("Students") + 
     xlab("Date")+
     geom_hline(yintercept =  seq(0, mCS, 10)/mCS, linetype = "dotted")+
@@ -652,7 +653,7 @@ IS_Tab %>%
 ```
 
 
-```{r student_isolations_vis, eval=FALSE}
+```{r student_isolations_vis}
 adjust = 1
 cf = max(mIS+2, 5)
 IS_days_fill %>%
@@ -672,7 +673,8 @@ IS_days_fill %>%
     coord_fixed(ratio = cf) +
     ggtitle("Active Isolated Students Each Day") + 
     theme(plot.title = element_text(hjust = 0.5),
-          legend.text = element_text(size = 15)) + 
+          legend.text = element_text(size = 15),
+          legend.position="bottom") + 
     ylab("Students") + 
     xlab("Date")+
     geom_vline(xintercept =  seq(spring, last, "months"))#+
