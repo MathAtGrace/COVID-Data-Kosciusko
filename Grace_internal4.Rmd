@@ -44,7 +44,7 @@ K <- subset(IN_counties, IN_counties$COUNTY_NAME == "Kosciusko")
 #The first day of data
 fall <- as.Date("2020-07-20")
 spring <- as.Date("2021-01-01")
-#yest <- as.Date("2021-01-15")# 
+#yest <- as.Date("2021-01-24") #For redoing past reports
 yest <- Sys.Date()-1
 last <- as.Date("2021-05-15")
 
@@ -72,10 +72,10 @@ SS <- S_spring %>%
            TRUE ~ tolower(substring(test_result, 1, 1))))) %>%
   mutate(type = factor(case_when(
            test_result == "p" ~ "Isolation",
-           !is.na(symptoms) ~ "Isolation", #Don't need? !is.na(asymptomatic) ~ "Isolation",
+           !is.na(symptoms) ~ "Isolation",
            TRUE ~ "Quarantine"))) %>%
   mutate(started = case_when(
-    is.na(started) & test_result == "p" & !is.na(exposure) ~ exposure,
+    is.na(started) & !is.na(exposure) ~ exposure,
     is.na(started) & test_result == "p" & !is.na(end_date) ~ end_date - 10,
     started > end_date ~ end_date,
     TRUE ~ started
@@ -124,6 +124,10 @@ SF <- S_fall %>%
             !is.na(i_started) ~ "Isolation",
             TRUE ~ "Quarantine")),
          started = pmin(tqs, q_started, i_started, test_date, result_date, na.rm = TRUE)) %>%
+  mutate(started = case_when(
+    is.na(started) & !is.na(exposure) ~ exposure,
+    TRUE ~ started
+  )) %>%
   select(-q_started, -i_started) %>%
   mutate(started = case_when(
     is.na(started) & !is.na(end_date) & !is.na(exposure) & type == "Quarantine" ~ exposure,
@@ -458,7 +462,7 @@ mIE <- IE_days_fill %>%
 #Fill in dates between start of student quarantine and end date,
 #Then total for each day
 CE <- E_spring %>%
-  filter(Test_Result == "p") %>%
+  filter(Test_Result == "p" & Test_Date <= yest) %>%
   #Fill in missing Result Dates 
   mutate(Test_Date = case_when(
     !is.na(Test_Date) ~ Test_Date,
@@ -527,6 +531,7 @@ T2 <- SS %>%
     is.na(at_health_center.x) ~ at_health_center.y,
     TRUE ~ at_health_center.x
   )) %>%
+  filter(test_date <= yest) %>%
   select(-at_health_center.x, -at_health_center.y)
 
 #All Reported
@@ -548,13 +553,14 @@ TW <- T2 %>%
   group_by(test_result, .drop = FALSE) %>%
   count() %>%
   pivot_wider(names_from = test_result, values_from = n) %>%
-  mutate(Type = "Spring: All Weekly",
+  mutate(Type = "Spring Semester",
          Total = n + p,
          Percent = percent(case_when(
            Total == 0 ~ 0,
            TRUE ~ p/Total
-         ))) %>%
-  select(Type, Total, Percent)
+         ), accuracy = 0.1)) %>%
+  rename(Cases = p) %>%
+  select(Type, Total, Cases, Percent)
 
 #Past Week ALl Reported
 PTA <- T2 %>%
@@ -576,15 +582,16 @@ PTW <- T2 %>%
   group_by(test_result, .drop = FALSE) %>%
   count() %>%
   pivot_wider(names_from = test_result, values_from = n) %>%
-  mutate(Type = "Past Week: All Weekly",
+  mutate(Type = "Past Week",
          Total = n + p,
          Percent = percent(case_when(
            Total == 0 ~ 0,
            TRUE ~ p/Total
-         ))) %>%
-  select(Type, Total, Percent)
+         ), accuracy = 0.1)) %>%
+  rename(Cases = p) %>%
+  select(Type, Total, Cases, Percent)
 
-T_Tab <- bind_rows(PTW, PTA, TW, TA)
+T_Tab <- bind_rows(PTW, TW)
 
 TbyD <- T2 %>%
   mutate(at_health_center = factor(at_health_center)) %>%
@@ -642,8 +649,8 @@ names(c_vals2) <- c("Other Reported", "Weekly", "All Reported")
 
 Notes and Irregularities:
 
-  - (1/25) The positivity rate is coming out really high for all reported tests right now because this report does not have access to all the the negative tests that students have reported before coming to campus.
-  - (1/25) The methods of this report had to be redone in order to work with the format of the new contact tracing document.  For some reason, these changes caused several quarantines from the fall to be classified as isolations or not counted.  I will take a closer look at this soon. (Ryan)
+  - (1/27) The reported total quarantines are currently not counting 13 quarantines from last fall that turned into isolations when those students showed symptoms.  This way, one can report the sum of our quarantines and isolations without double counting any stuedents.
+  - (1/26) The positivity rate was changed to only show the positivity rate of the weekly tests at Grace.
 
 \newpage
 
@@ -686,7 +693,7 @@ SS_days_fill %>%
           legend.position="bottom") + 
     ylab("Students") + 
     xlab("Date")+
-    geom_hline(yintercept =  seq(0, mCS, 10)/mCS, linetype = "dotted")+
+    geom_hline(yintercept =  seq(0, mCS+1, 10)/mCS, linetype = "dotted")+
     geom_vline(xintercept =  seq(spring, last, "months"))+
     annotate("text", x = spring+2,
              y = seq(11, mCS, 10)/mCS, label = seq(10, mCS, 10))
@@ -738,25 +745,25 @@ CE_days_fill %>%
 T_Tab %>%
   kbl(caption = "Student Testing",
       booktabs = TRUE, format = "latex",
-      col.names = c("Type", "Tests", "Percent Postive"),
-      align = c('l','r','r')) %>%
+      col.names = c("Type", "Tests", "Cases", "Percent Postive"),
+      align = c('l','r', 'r','r')) %>%
   kable_styling(latex_options = "striped")%>%
   kable_styling(latex_options = "hold_position")
 ```
 
 ```{r student_testing_percent, fig.height=5}
 T_Pos %>%
-  filter(Type == "Weekly" | test_date > as.Date("2021-01-24")) %>%
+  filter(Type == "Weekly") %>%
   mutate(Percent = as.numeric(sub("%","",Percent))/100) %>%
-  ggplot(aes(x = test_date, y = Percent, color = Type)) +
+  ggplot(aes(x = test_date, y = Percent)) +
   geom_point(size = 3)+
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
   scale_x_date(date_labels="%b %d",
                date_breaks  = "7 days",
                minor_breaks = "1 day",
                limits = c(spring, last))+ 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1),
-                     limit=c(0,NA))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1),
+                     limit=c(0,.03))+
   ggtitle("Student Testing - 7 Day Rolling Average") + 
     theme(plot.title = element_text(hjust = 0.5, size = 20),
           legend.text = element_text(size = 15),
@@ -776,8 +783,9 @@ T2 %>%
   pivot_wider(names_from = at_health_center, values_from = n) %>%
   rename(Weekly = "FALSE", 'Other Reported' = "TRUE") %>%
   pivot_longer(cols = Weekly:'Other Reported', names_to = "Type") %>%
-  ggplot(aes(x = test_date, y = value, fill = Type)) +
-  geom_histogram(stat = "identity", position = "stack") +
+  filter(Type == "Weekly") %>%
+  ggplot(aes(x = test_date, y = value)) +
+  geom_histogram(stat = "identity") +
   scale_x_date(date_labels="%b %d",
                date_breaks  = "7 days",
                minor_breaks = "1 day",
@@ -836,7 +844,7 @@ SS_days_fill %>%
     ylab("Students") + 
     xlab("Date")+
     geom_vline(xintercept =  seq(spring, last, "months"))+
-    geom_hline(yintercept =  seq(0, mIS, 10)/cf, linetype = "dotted")+
+    geom_hline(yintercept =  seq(0, mIS+1, 10)/cf, linetype = "dotted")+
     annotate("text", x = spring+2,
              y = seq(11, mIS, 10)/cf, label = seq(10, mIS, 10))
 ```

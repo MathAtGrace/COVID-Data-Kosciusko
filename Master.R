@@ -8,6 +8,8 @@ source("Testing_Data.R")
 #The COVID Dashboard
 fname = paste("G:/Shared drives/Dashboard - COVID-19/Grace internal ",
               format(Sys.Date()), ".pdf", sep = "")
+#fname = paste("G:/Shared drives/Dashboard - COVID-19/Grace internal ",
+#              "2021-01-25", ".pdf", sep = "")
 render("Grace_internal4.Rmd", output_file = fname)
 
 render("index.Rmd", output_file = "index.html")
