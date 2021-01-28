@@ -53,7 +53,8 @@ SS <- S_spring %>%
   select(id:first_name, quarantine_isolation_location,
          travel_quarantine_start_date:test_result,
          actual_release_from_quarantine_isolation:actual_release_from_quarantine_isolation,
-         complete) %>%
+         complete, positive_at_home) %>%
+#  filter(is.na(positive_at_home)) %>%
   rename(location = quarantine_isolation_location,
          tqs = travel_quarantine_start_date,
          exposure = last_exposure_date,
@@ -67,9 +68,7 @@ SS <- S_spring %>%
          test_date = convert_to_date(test_date),
          end_date = convert_to_date(end_date),
          started = pmin(tqs, test_date, convert_to_date(started), na.rm = TRUE)) %>%
-  mutate(test_result = factor(case_when(
-           !is.na(asymptomatic) ~ "p",
-           TRUE ~ tolower(substring(test_result, 1, 1))))) %>%
+  mutate(test_result = tolower(substring(test_result, 1, 1))) %>%
   mutate(type = factor(case_when(
            test_result == "p" ~ "Isolation",
            !is.na(symptoms) ~ "Isolation",
@@ -88,14 +87,12 @@ SS <- S_spring %>%
   )) %>%
   mutate(location = factor(case_when(
     !is.na(tqs) & type != "Isolation" ~ "Grace_travel",
+    !is.na(positive_at_home) ~ "Before",
     tolower(substring(location, 1, 4)) == "home" ~ "Home",
     tolower(substring(location, 1, 4)) == "off " ~ "Home",
     tolower(substring(location, 1, 4)) == "fami" ~ "Home",
-    TRUE ~ "Grace"), levels = c("Home", "Grace_travel", "Grace"))) %>%
-  mutate(full = factor(str_glue("{first_name} {last_name}", na_action="ignore")),
-    id = case_when(
-    is.na(id) ~ as.numeric(full),
-    TRUE ~ id)) %>%
+    tolower(substring(location, 1, 4)) == "poss" ~ "Home",
+    TRUE ~ "Grace"), levels = c("Before", "Home", "Grace_travel", "Grace"))) %>%
   select(id, first_name, last_name, location, type, test_result, test_date, started, end_date)
 
 SF <- S_fall %>%
@@ -192,7 +189,7 @@ QS_by_day <- SS_days_fill %>%
   group_by(date, location, .drop = FALSE) %>%
   summarise(n = n()) %>%
   pivot_wider(names_from = location, values_from = n)%>%
-  mutate(s_total_quar = Grace + Home + Grace_travel) %>%
+  mutate(s_total_quar = Grace + Home) %>%
   ungroup() %>%
   rename(S_Quar_Grace = Grace, S_Quar_Home = Home, S_Quar_Travel = Grace_travel)
 
@@ -207,7 +204,7 @@ QS_spring_total <- SS %>%
   group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
   pivot_wider(names_from = location, values_from = n) %>%
-  mutate(Total = Grace + Home + Grace_travel) %>%
+  mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "Spring Semester Total") %>%
   select(Type, Total, Home, Grace, Grace_travel)
@@ -218,7 +215,7 @@ QS_all_total <- S_all %>%
   group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
   pivot_wider(names_from = location, values_from = n) %>%
-  mutate(Total = Grace + Home + Grace_travel) %>%
+  mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Total") %>%
   select(Type, Total, Home, Grace, Grace_travel)
@@ -229,7 +226,7 @@ QS_all_unique <- S_all %>%
   group_by(location, .drop = FALSE)%>%
   summarise(n = n()) %>%
   pivot_wider(names_from = location, values_from = n) %>%
-  mutate(Total = Grace + Home + Grace_travel) %>%
+  mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Unique Students") %>%
   select(Type, Total, Home, Grace, Grace_travel)
@@ -239,7 +236,7 @@ QS_Tab <- bind_rows(QS_yest, QS_spring_total, QS_all_total, QS_all_unique)
 
 #Maximum count needed for graphs
 mQS <- SS_days_fill %>%
-  filter(type == "Quarantine") %>%
+  filter(type == "Quarantine", location != "Grace_travel") %>%
   group_by(date, .drop = FALSE) %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
@@ -256,7 +253,7 @@ IS_yest <- SS_days_fill %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = str_glue("Active on ", format(yest, "%a %b %d"))) %>%
-  select(Type, Total, Grace, Home)
+  select(Type, Total, Grace, Home, Before)
 
 IS_spring_total <- SS %>%
   filter(type == "Isolation") %>%
@@ -266,7 +263,7 @@ IS_spring_total <- SS %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "Spring Semester Total") %>%
-  select(Type, Total, Grace, Home)
+  select(Type, Total, Grace, Home, Before)
 
 IS_all_total <- S_all %>%
   filter(type == "Isolation") %>%
@@ -276,7 +273,7 @@ IS_all_total <- S_all %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Total") %>%
-  select(Type, Total, Grace, Home)
+  select(Type, Total, Grace, Home, Before)
 
 IS_all_unique <- S_all %>%
   filter(type == "Isolation") %>%
@@ -287,13 +284,13 @@ IS_all_unique <- S_all %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Unique Students") %>%
-  select(Type, Total, Grace, Home)
+  select(Type, Total, Grace, Home, Before)
 
 IS_Tab <- bind_rows(IS_yest, IS_spring_total, IS_all_total, IS_all_unique)
 
 #Maximum count needed for graphs
 mIS <- SS_days_fill %>%
-  filter(type == "Isolation") %>%
+  filter(type == "Isolation", location != "Before") %>%
   group_by(date, .drop = FALSE) %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
@@ -313,7 +310,7 @@ CS_yest <- SS_days_fill %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = str_glue("Active on ", format(yest, "%a %b %d"))) %>%
-  select(Type, Total, Grace, Home)
+  select(Type, Total, Grace, Home, Before)
 
 CS_spring_total <- SS %>%
   filter(test_result == "p") %>%
@@ -323,7 +320,7 @@ CS_spring_total <- SS %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "Spring Semester Total") %>%
-  select(Type, Total, Grace, Home)
+  select(Type, Total, Grace, Home, Before)
 
 CS_all_total <- S_all %>%
   filter(test_result == "p") %>%
@@ -333,13 +330,13 @@ CS_all_total <- S_all %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
   mutate(Type = "20-21 Academic Year Total") %>%
-  select(Type, Total, Grace, Home)
+  select(Type, Total, Grace, Home, Before)
 
 CS_Tab <- bind_rows(CS_yest, CS_spring_total, CS_all_total)
 
 #Maximum count needed for graphs
 mCS <- SS_days_fill %>%
-  filter(test_result == "p") %>%
+  filter(test_result == "p", location != "Before") %>%
   group_by(date, .drop = FALSE) %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
@@ -462,7 +459,7 @@ mIE <- IE_days_fill %>%
 #Fill in dates between start of student quarantine and end date,
 #Then total for each day
 CE <- E_spring %>%
-  filter(Test_Result == "p" & Test_Date <= yest) %>%
+  filter(Test_Result == "p") %>%
   #Fill in missing Result Dates 
   mutate(Test_Date = case_when(
     !is.na(Test_Date) ~ Test_Date,
@@ -471,6 +468,7 @@ CE <- E_spring %>%
     !is.na(Quarantine) ~ Quarantine,
     TRUE ~ yest - 1  #No data defaults to 2 days ago
   )) %>%
+  filter(Test_Date <= yest) %>%
   select(Last_Name:First_Name, Test_Date, End_Date)
 
 CE_days_fill <- CE %>%
@@ -522,119 +520,78 @@ mCE <- CE_days_fill %>%
 #Testing Data
 
 #Join with other testing data
-T2 <- SS %>%
-  select(id, test_result, test_date) %>%
-  drop_na() %>%
-  mutate(at_health_center = TRUE) %>%
-  full_join(x = T, y = ., by = c("id", "test_date", "test_result"))%>%
-  mutate(at_health_center = case_when(
-    is.na(at_health_center.x) ~ at_health_center.y,
-    TRUE ~ at_health_center.x
-  )) %>%
-  filter(test_date <= yest) %>%
-  select(-at_health_center.x, -at_health_center.y)
+#T2 <-SS %>%
+#  select(id, test_result, test_date) %>%
+#  drop_na() %>%
+#  mutate(at_health_center = TRUE) %>% Currently the At_Health_Center data is ambiguous
+#  full_join(x = T, y = ., by = c("id", "test_date", "test_result"))%>%
+#  mutate(at_health_center = case_when(
+#    is.na(at_health_center.x) ~ at_health_center.y,
+#    TRUE ~ at_health_center.x
+#  )) %>%
+#  select(-at_health_center) %>%
+#  filter(test_date <= yest) %>%
+#  mutate(test_result = (test_result == "p")) %>%
+#  select(-at_health_center.x, -at_health_center.y) %>%
 
-#All Reported
-TA <- T2 %>%
-  group_by(test_result, .drop = FALSE) %>%
-  count()%>%
-  pivot_wider(names_from = test_result, values_from = n) %>%
-  mutate(Type = "Spring: All Reported",
-         Total = n + p,
-         Percent = percent(case_when(
-           Total == 0 ~ 0,
-           TRUE ~ p/Total
-         ))) %>%
-  select(Type, Total, Percent)
+#Positives are tested again, so we group by id and date, then use prod()
+T2 <- T %>%
+  mutate(test_result = (test_result == "p")) %>%
+  group_by(id, test_date) %>%
+  summarise(test_result = prod(test_result)) %>%
+  filter(id != 1610566) #Fix data entry error
+  
 
 #Weekly  
 TW <- T2 %>%
-  filter(!at_health_center) %>%
-  group_by(test_result, .drop = FALSE) %>%
-  count() %>%
-  pivot_wider(names_from = test_result, values_from = n) %>%
+  ungroup() %>%
+  summarise(Cases = sum(test_result), Total = n()) %>%
   mutate(Type = "Spring Semester",
-         Total = n + p,
          Percent = percent(case_when(
            Total == 0 ~ 0,
-           TRUE ~ p/Total
+           TRUE ~ Cases/Total
          ), accuracy = 0.1)) %>%
-  rename(Cases = p) %>%
   select(Type, Total, Cases, Percent)
-
-#Past Week ALl Reported
-PTA <- T2 %>%
-  filter(test_date > yest - 7) %>%
-  group_by(test_result, .drop = FALSE) %>%
-  count() %>%
-  pivot_wider(names_from = test_result, values_from = n) %>%
-  mutate(Type = "Past Week: All Reported",
-         Total = n + p,
-         Percent = percent(case_when(
-           Total == 0 ~ 0,
-           TRUE ~ p/Total
-         ))) %>%
-  select(Type, Total, Percent)
 
 #Past Week ALl Weekly
 PTW <- T2 %>%
-  filter(!at_health_center & test_date > yest - 7) %>%
-  group_by(test_result, .drop = FALSE) %>%
-  count() %>%
-  pivot_wider(names_from = test_result, values_from = n) %>%
+  filter(test_date > yest - 7) %>%
+  ungroup() %>%
+  summarise(Cases = sum(test_result), Total = n()) %>%
   mutate(Type = "Past Week",
-         Total = n + p,
          Percent = percent(case_when(
            Total == 0 ~ 0,
-           TRUE ~ p/Total
+           TRUE ~ Cases/Total
          ), accuracy = 0.1)) %>%
-  rename(Cases = p) %>%
   select(Type, Total, Cases, Percent)
 
 T_Tab <- bind_rows(PTW, TW)
 
-TbyD <- T2 %>%
-  mutate(at_health_center = factor(at_health_center)) %>%
-  group_by(test_date, at_health_center, test_result, .drop = FALSE) %>%
-  count() %>%
-  group_by(test_result, at_health_center) %>%
-  complete(test_date = seq.Date(as.Date("2021-01-12"), yest, by = "day"),
-           fill = list(n = 0))%>%
-  pivot_wider(names_from = test_result, values_from = n) %>%
-  mutate(n = roll_sumr(n, 7, fill = NA),
-         p = roll_sumr(p, 7, fill = NA)) %>%
-  drop_na()
-
-TbyDA <- TbyD %>%
+T_Pos <- T2 %>%
   group_by(test_date) %>%
-  summarise(n = sum(n), p = sum(p)) %>%
-  ungroup() %>%
-  mutate(Type = "All Reported")
+  summarise(Cases = sum(test_result), Total = n())
 
-TbyDW <- TbyD %>%
-  filter(at_health_center == "FALSE") %>%
-  ungroup() %>%
-  mutate(Type = "Weekly") %>%
-  select(Type, test_date, n, p)
-
-T_Pos <- bind_rows(TbyDA, TbyDW) %>%
-  mutate(Total = n + p,
-         Percent = percent(case_when(
+T_Pos_W <- T_Pos%>%
+  complete(test_date = seq.Date(as.Date("2021-01-15"), yest, by = "day"),
+           fill = list(Cases = 0, Total = 0))%>%
+  mutate(Cases = roll_sumr(Cases, 7, fill = NA),
+         Total = roll_sumr(Total, 7, fill = NA)) %>%
+  drop_na() %>%
+  mutate(Percent = case_when(
            Total == 0 ~ 0,
-           TRUE ~ p/Total
-         ))) %>%
-  select(-n, -p)
+           TRUE ~ Cases/Total
+         ))
 
 #Colors used for graphs
 gg_color_hue <- function(n) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
-c_vals = gg_color_hue(3)
+c_vals = gg_color_hue(4)
 names(c_vals) <- rev(levels(SS$location))
 
-c_vals2 = gg_color_hue(3)
-names(c_vals2) <- c("Other Reported", "Weekly", "All Reported")
+c_vals2 = gg_color_hue(2)
+names(c_vals2) <- c("Positive", "Negative")
 ```
 
 ![Grace Logo](Logo-GC-Red-Background-Stretched.jpg)\
@@ -649,7 +606,10 @@ names(c_vals2) <- c("Other Reported", "Weekly", "All Reported")
 
 Notes and Irregularities:
 
+
+  - (1/28) Students who tested positive before coming to Grace are labeled as `Before` and are not included in total numbers.
   - (1/27) The reported total quarantines are currently not counting 13 quarantines from last fall that turned into isolations when those students showed symptoms.  This way, one can report the sum of our quarantines and isolations without double counting any stuedents.
+  - (1/27) Quarantines from international travel are no longer counted among `Total` or graphed.
   - (1/26) The positivity rate was changed to only show the positivity rate of the weekly tests at Grace.
 
 \newpage
@@ -659,9 +619,11 @@ Notes and Irregularities:
 
 ### Confirmed Cases Among Students
 
+Grace College required students to test negative before arriving on campus, and those that tested positive before coming are listed in the column `Before`.  These are not counted in our total, since they never set foot on campus.
+
 ```{r student_cases_table}
 CS_Tab %>%
-  select(Type, Total, Home, Grace)%>%
+  select(Type, Total, Home, Grace, Before)%>%
   kbl(caption = "Student Cases", booktabs = TRUE, format = "latex") %>%
   kable_styling(latex_options = "striped")%>%
   kable_styling(latex_options = "hold_position")
@@ -672,7 +634,7 @@ CS_Tab %>%
 ```{r student_cases_vis, fig.height = 4}
 adjust = 1
 SS_days_fill %>%
-  filter(test_result == "p") %>%
+  filter(test_result == "p", location != "Before") %>%
   ggplot(aes(x = date, fill = location)) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
@@ -694,9 +656,10 @@ SS_days_fill %>%
     ylab("Students") + 
     xlab("Date")+
     geom_hline(yintercept =  seq(0, mCS+1, 10)/mCS, linetype = "dotted")+
-    geom_vline(xintercept =  seq(spring, last, "months"))+
-    annotate("text", x = spring+2,
-             y = seq(11, mCS, 10)/mCS, label = seq(10, mCS, 10))
+    geom_vline(xintercept =  seq(spring, last, "months"))
+#+
+#    annotate("text", x = spring+2,
+#             y = seq(11, mCS, 10)/mCS, label = seq(10, mCS, 10))
 ```
 
 ### Confirmed Cases Among Employees
@@ -739,6 +702,8 @@ CE_days_fill %>%
 
 \newpage
 
+The number of cases below is less than the number of cases on the last page because it does not include students who tested positive before arriving on campus, of which there are 2.
+
 # Student Testing
 
 ```{r testing_table}
@@ -752,9 +717,7 @@ T_Tab %>%
 ```
 
 ```{r student_testing_percent, fig.height=5}
-T_Pos %>%
-  filter(Type == "Weekly") %>%
-  mutate(Percent = as.numeric(sub("%","",Percent))/100) %>%
+T_Pos_W %>%
   ggplot(aes(x = test_date, y = Percent)) +
   geom_point(size = 3)+
   stat_smooth(size = 1, se = FALSE, linetype = "dashed") +
@@ -775,17 +738,18 @@ T_Pos %>%
   scale_color_manual(values = c_vals2)
 ```
 
-```{r student_testing, fig.height=5}
-T2 %>%
-  mutate(at_health_center = factor(at_health_center)) %>%
-  group_by(test_date, at_health_center, .drop = FALSE) %>%
-  count() %>%
-  pivot_wider(names_from = at_health_center, values_from = n) %>%
-  rename(Weekly = "FALSE", 'Other Reported' = "TRUE") %>%
-  pivot_longer(cols = Weekly:'Other Reported', names_to = "Type") %>%
-  filter(Type == "Weekly") %>%
-  ggplot(aes(x = test_date, y = value)) +
-  geom_histogram(stat = "identity") +
+```{r student_testing, fig.height=7}
+T_Pos %>%
+  mutate(Negative = Total - Cases) %>%
+  rename(Positive = Cases) %>%
+  select(-Total) %>%
+  group_by(test_date) %>%
+  pivot_longer(cols = c(Positive, Negative),
+               names_to = "Test_Result",
+               values_to = "Count") %>%
+  mutate(Test_Result = factor(Test_Result, levels = c("Positive", "Negative"))) %>%
+  ggplot(aes(x = test_date, y = Count, fill = Test_Result)) +
+  geom_histogram(stat = "identity", position = "stack")+
   scale_x_date(date_labels="%b %d",
                date_breaks  = "7 days",
                minor_breaks = "1 day",
@@ -806,11 +770,13 @@ T2 %>%
 
 # Isolated
 
+Grace College required students to test negative before arriving on campus, and those that tested positive before coming are listed in the column `Before`.  These are not counted in our total, since they never set foot on campus.
+
 ### Isolated Students
 
 ```{r studend_isolations_table}
 IS_Tab %>%
-  select(Type, Total, Home, Grace) %>%
+  select(Type, Total, Home, Grace, Before)%>%
   kbl(caption = "Student Isolations",
         booktabs = TRUE, format = "latex") %>%
   kable_styling(latex_options = "striped")%>%
@@ -822,7 +788,7 @@ IS_Tab %>%
 adjust = 1
 cf = max(mIS+2, 5)
 SS_days_fill %>%
-  filter(type == "Isolation") %>%
+  filter(type == "Isolation", location != "Before") %>%
   ggplot(aes(x = date, fill = location)) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
@@ -844,9 +810,10 @@ SS_days_fill %>%
     ylab("Students") + 
     xlab("Date")+
     geom_vline(xintercept =  seq(spring, last, "months"))+
-    geom_hline(yintercept =  seq(0, mIS+1, 10)/cf, linetype = "dotted")+
-    annotate("text", x = spring+2,
-             y = seq(11, mIS, 10)/cf, label = seq(10, mIS, 10))
+    geom_hline(yintercept =  seq(0, mIS+1, 10)/cf, linetype = "dotted")
+#+
+#    annotate("text", x = spring+2,
+#             y = seq(11, mIS, 10)/cf, label = seq(10, mIS, 10))
 ```
 
 ### Isolated Employees
@@ -891,7 +858,7 @@ IE_days_fill %>%
 
 ### Quarantined Students
 
-In the table and graph below, `Grace_travel` are quarentines from international travel, and are not counted among the category `Grace`.  This is because they are quarantining because of travel, not exposure.
+In the table below, `Grace_travel` are quarentines from international travel, and are not counted among the category `Grace` or the category `Total`.  Neither are they graphed below.  This is because these quarantines are from international travel, not exposure to COVID-19.
 
 ```{r student_quarantines_table}
 QS_Tab %>%
@@ -908,7 +875,7 @@ QS_Tab %>%
 adjust = 1
 cf = max(mQS, 5)
 SS_days_fill %>%
-  filter(type == "Quarantine") %>%
+  filter(type == "Quarantine", location != "Grace_travel") %>%
   ggplot(aes(x = date, fill = location)) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
