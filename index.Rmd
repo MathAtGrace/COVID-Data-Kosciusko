@@ -101,7 +101,8 @@ IN_hosp <- read_excel(tf) %>%
                                              "available")))
 
 #More Hospital Data
-url = "https://healthdata.gov/sites/default/files/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20201215.csv"
+yest_str = format(yest, format = "%Y%m%d")
+url = str_glue("https://healthdata.gov/sites/default/files/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_","{yest_str}", ".csv")
 US_indiv_hosp <- read.csv(url) %>%
   select(c(2:10, 22, 24, 26)) %>%
   rename(total = total_icu_beds_7_day_avg,
@@ -155,8 +156,9 @@ save(US_indiv_hosp2, file = "hosps_coords.R") #Save for next time
 
 US_indiv_hosp3 <- US_indiv_hosp2 %>%
   select(ccn, lat, long) %>%
-  right_join(US_indiv_hosp, by = "ccn") %>%
+  right_join(US_indiv_hosp, by = "ccn")%>%
   relocate(long, lat) %>%
+  drop_na() %>%
   usmap_transform() %>%
   mutate(used_pct = ifelse(used_pct > 1, 1, used_pct),
          cov_pct = ifelse(cov_pct > 1, 1, cov_pct))
