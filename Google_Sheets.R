@@ -14,8 +14,8 @@ S_spring <- read_sheet("https://docs.google.com/spreadsheets/d/107-RZMp8JifihWCQ
                      skip = 1)
 
 #Backup Plan - The Copycat spreadsheet
-S_spring <- read_sheet("https://docs.google.com/spreadsheets/d/1hYSSaiyIbV_pjBs3ljTwF9kf5YI0Ewj_bNEt7tNYMtA/edit#gid=0",
-                     skip = 1)
+#S_spring <- read_sheet("https://docs.google.com/spreadsheets/d/1hYSSaiyIbV_pjBs3ljTwF9kf5YI0Ewj_bNEt7tNYMtA/edit#gid=0",
+#                     skip = 1)
 save(S_spring, file = "SS.Rdata")
 
 #Employee Data
