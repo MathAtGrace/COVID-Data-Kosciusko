@@ -11,7 +11,7 @@ library(googlesheets4)
 #save(S_fall, file = "SF.RData")
 
 S_spring <- read_sheet("https://docs.google.com/spreadsheets/d/107-RZMp8JifihWCQymwHVtJ7teUtVQL1cSC4O1H0fLo/edit?ts=600b0c97#gid=0",
-                     skip = 1)
+                     sheet = "Quarantine/Isolation", skip = 1)
 
 #Backup Plan - The Copycat spreadsheet
 #S_spring <- read_sheet("https://docs.google.com/spreadsheets/d/1hYSSaiyIbV_pjBs3ljTwF9kf5YI0Ewj_bNEt7tNYMtA/edit#gid=0",
