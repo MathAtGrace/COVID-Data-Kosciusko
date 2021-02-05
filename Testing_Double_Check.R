@@ -20,8 +20,8 @@ T_hour <- T %>%
 T_hour %>%
   filter(!employee) %>%
   group_by(id, t_date) %>%
-  summarise(cases = prod(test_result), test_date = min(test_date)) %>%
-  mutate(t_hour = factor(hour(test_date))) %>%
+  summarise(cases = prod(test_result), test_time = min(test_time)) %>%
+  mutate(t_hour = factor(hour(test_time))) %>%
   ungroup() %>%
   group_by(t_date, t_hour)%>%
   summarise(cases = sum(cases))%>%
@@ -42,8 +42,8 @@ T_hour %>%
 T_hour %>%
   filter(!employee) %>%
   group_by(id, t_date) %>%
-  summarise(cases = prod(test_result), test_date = min(test_date)) %>%
-  mutate(t_hour = factor(hour(test_date))) %>%
+  summarise(cases = prod(test_result), test_time = min(test_time)) %>%
+  mutate(t_hour = factor(hour(test_time))) %>%
   ungroup() %>%
   group_by(t_date, t_hour)%>%
   summarise(total = n())%>%
@@ -72,6 +72,7 @@ SS %>%
   filter(test_result == "p",
          location != "Before",
          started > as_date("2021-01-23"))%>%
+  select(-end_date) %>%
   full_join(TCS, by = c("id", "first_name", "last_name")) %>%
   filter(is.na(test_time) | is.na(test_result)) %>%
   write.csv(file = "M:/COVID_dashboard/cases_students_problems.csv")
@@ -80,6 +81,7 @@ SS %>%
   filter(test_result == "p",
          location != "Before",
          started > as_date("2021-01-23"))%>%
+  select(-end_date) %>%
   full_join(TCS, by = c("id", "first_name", "last_name")) %>%
   filter(is.na(test_time) | is.na(test_result)) %>%
   View()
