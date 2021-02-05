@@ -4,21 +4,9 @@ T_Pos %>%
 
 load("T.Rdata")
 
-T_hour <- read.csv("M:/COVID_dashboard/COVID_dashboard_test_results.csv") %>%
-  clean_names() %>%
-  rename(id = i_id_num,
-         test_date = test_dt,
-         at_hc = tested_at_health_center) %>%
-  mutate(test_result = (test_result == "P"),
-         test_date = as_datetime(test_date),
-         employee = (employee == "Y"),
-         t_date = date(test_date),
-         t_hour = factor(hour(test_date)),
-         test_result = case_when(
-           id == 1610566 ~ FALSE,    #Fix data entry error
-           TRUE ~ test_result
-         ))%>%
-  select(-sent_to_state_dt) %>%
+T_hour <- T %>%
+  mutate(t_date = date(test_time),
+         t_hour = factor(hour(test_time)))%>%
   separate(last_first_mi, c("last_name", "first_name"), extra = "drop")
 
 #T_hour %>%
@@ -67,20 +55,33 @@ T_hour %>%
 TCS <- T_hour %>%
   filter(!employee) %>%
   group_by(id, first_name, last_name, t_date) %>%
-  summarise(cases = prod(test_result), test_date = min(test_date)) %>%
-  mutate(t_hour = factor(hour(test_date))) %>%
+  summarise(cases = prod(test_result), test_time = min(test_time)) %>%
+  mutate(t_hour = factor(hour(test_time))) %>%
   ungroup() %>%
   filter(cases > 0) %>%
-  select(id, first_name, last_name, test_date)
+  select(id, first_name, last_name, test_time)
 
 SS %>%
-  filter(test_result == "p", location != "Before")%>%
-  full_join(TCS, by = "id") %>%
+  filter(test_result == "p",
+         location != "Before",
+         started > as_date("2021-01-23"))%>%
+  full_join(TCS, by = c("id", "first_name", "last_name")) %>%
   write.csv(file = "M:/COVID_dashboard/cases_students.csv")
 
 SS %>%
-  filter(test_result == "p", location != "Before")%>%
+  filter(test_result == "p",
+         location != "Before",
+         started > as_date("2021-01-23"))%>%
   full_join(TCS, by = c("id", "first_name", "last_name")) %>%
+  filter(is.na(test_time) | is.na(test_result)) %>%
+  write.csv(file = "M:/COVID_dashboard/cases_students_problems.csv")
+
+SS %>%
+  filter(test_result == "p",
+         location != "Before",
+         started > as_date("2021-01-23"))%>%
+  full_join(TCS, by = c("id", "first_name", "last_name")) %>%
+  filter(is.na(test_time) | is.na(test_result)) %>%
   View()
 
 CE %>%
