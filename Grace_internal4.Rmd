@@ -535,6 +535,7 @@ mCE <- CE_days_fill %>%
 
 #Positives are tested again, so we group by id and date, then use prod()
 T2 <- T %>%
+  mutate(test_date = as_date(test_time)) %>%
   group_by(id, test_date, employee) %>%
   summarise(test_result = prod(test_result)) %>%
   mutate(test_result = case_when(
@@ -957,7 +958,7 @@ SS_days_fill %>%
     geom_hline(yintercept =  seq(0, mQS, 10)/cf, linetype = "dotted")+
     geom_vline(xintercept =  seq(spring, last, "months"))+
     annotate("text", x = spring+2,
-             y = seq(11, mQS, 10)/cf, label = seq(10, mQS, 10))
+             y = (1+seq(10, mQS, 10))/cf, label = seq(10, mQS, 10))
 ```
 
 ### Quarantined Employees
