@@ -101,7 +101,8 @@ IN_hosp <- read_excel(tf) %>%
                                              "available")))
 
 #More Hospital Data
-yest_str = format(yest, format = "%Y%m%d")
+round_date(yest, unit = "week", week_start = 7)
+yest_str = format(floor_date(yest, unit = "week", week_start = 7), format = "%Y%m%d")
 url = str_glue("https://healthdata.gov/sites/default/files/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_","{yest_str}", ".csv")
 US_indiv_hosp <- read.csv(url) %>%
   select(c(2:10, 22, 24, 26)) %>%
