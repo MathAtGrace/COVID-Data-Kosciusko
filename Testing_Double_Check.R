@@ -1,8 +1,9 @@
+load("T_Pos.Rdata")
+load("SS.Rdata")
+load("T.Rdata")
 
 T_Pos %>%
   write.csv(file = "M:/COVID_dashboard/testing_numbers_by_day.csv")
-
-load("T.Rdata")
 
 T_hour <- T %>%
   mutate(t_date = date(test_time),
