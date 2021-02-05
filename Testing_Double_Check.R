@@ -2,7 +2,7 @@
 T_Pos %>%
   write.csv(file = "M:/COVID_dashboard/testing_numbers_by_day.csv")
 
-load("Testing_Data.R")
+load("T.Rdata")
 
 T_hour <- read.csv("M:/COVID_dashboard/COVID_dashboard_test_results.csv") %>%
   clean_names() %>%
@@ -66,17 +66,22 @@ T_hour %>%
 
 TCS <- T_hour %>%
   filter(!employee) %>%
-  group_by(id, t_date) %>%
+  group_by(id, first_name, last_name, t_date) %>%
   summarise(cases = prod(test_result), test_date = min(test_date)) %>%
   mutate(t_hour = factor(hour(test_date))) %>%
   ungroup() %>%
   filter(cases > 0) %>%
-  select(id, test_date)
+  select(id, first_name, last_name, test_date)
 
 SS %>%
   filter(test_result == "p", location != "Before")%>%
   full_join(TCS, by = "id") %>%
   write.csv(file = "M:/COVID_dashboard/cases_students.csv")
+
+SS %>%
+  filter(test_result == "p", location != "Before")%>%
+  full_join(TCS, by = c("id", "first_name", "last_name")) %>%
+  View()
 
 CE %>%
   filter(End_Date >= yest) %>%
