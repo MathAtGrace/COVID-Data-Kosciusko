@@ -44,8 +44,8 @@ K <- subset(IN_counties, IN_counties$COUNTY_NAME == "Kosciusko")
 #The first day of data
 fall <- as.Date("2020-07-20")
 spring <- as.Date("2021-01-01")
-#yest <- as.Date("2021-01-24") #For redoing past reports
-yest <- Sys.Date()-1
+load("this_day.Rdata")
+yest <- this_day-1
 last <- as.Date("2021-05-15")
 
 SS <- S_spring %>%
@@ -91,6 +91,7 @@ SS <- S_spring %>%
     tolower(substring(location, 1, 4)) == "off " ~ "Home",
     tolower(substring(location, 1, 4)) == "fami" ~ "Home",
     tolower(substring(location, 1, 4)) == "poss" ~ "Home",
+    tolower(substring(location, 1, 4)) == "comm" ~ "Home",
     TRUE ~ "Grace"), levels = c("Before", "Home", "Grace_travel", "Grace"))) %>%
   select(id, first_name, last_name, location, type, test_result, test_date, started, end_date)
 
@@ -145,6 +146,13 @@ SF <- S_fall %>%
 SS_days_fill <- SS %>%
   rowwise() %>%
   do(data.frame(.[1:6], date = seq(.$started, .$end_date, by = "1 day")))
+
+CS <- SS %>%
+  filter(test_result == "p",
+         location != "Before",
+         started > as_date("2021-01-23"))
+
+save(CS, file = "CS.Rdata")
 
 S_all <- bind_rows(SS, SF)
 
@@ -231,7 +239,7 @@ QS_all_unique <- S_all %>%
   select(Type, Total, Home, Grace, Grace_travel)
 
 QS_Tab <- bind_rows(QS_yest, QS_spring_total, QS_all_total, QS_all_unique)
-
+save(QS_Tab, file = "QS_Tab.Rdata")
 
 #Maximum count needed for graphs
 mQS <- SS_days_fill %>%
@@ -286,6 +294,7 @@ IS_all_unique <- S_all %>%
   select(Type, Total, Grace, Home, Before)
 
 IS_Tab <- bind_rows(IS_yest, IS_spring_total, IS_all_total, IS_all_unique)
+save(IS_Tab, file = "IS_Tab.Rdata")
 
 #Maximum count needed for graphs
 mIS <- SS_days_fill %>%
@@ -332,6 +341,7 @@ CS_all_total <- S_all %>%
   select(Type, Total, Grace, Home, Before)
 
 CS_Tab <- bind_rows(CS_yest, CS_spring_total, CS_all_total)
+save(CS_Tab, file = "CS_Tab.Rdata")
 
 #Maximum count needed for graphs
 mCS <- SS_days_fill %>%
@@ -398,6 +408,7 @@ QE_all_total <- E_all %>%
   select(Type, Quarantine)
 
 QE_Tab <- bind_rows(QE_yest, QE_spring_total, QE_all_total)
+save(QE_Tab, file = "QE_Tab.Rdata")
 
 
 #Maximum count needed for graphs
@@ -444,6 +455,7 @@ IE_all_total <- E_all %>%
   select(Type, Isolated)
 
 IE_Tab <- bind_rows(IE_yest, IE_spring_total, IE_all_total)
+save(IE_Tab, file = "IE_Tab.Rdata")
 
 #Maximum count needed for graphs
 mIE <- IE_days_fill %>%
@@ -469,6 +481,8 @@ CE <- E_spring %>%
   )) %>%
   filter(Test_Date <= yest) %>%
   select(Last_Name:First_Name, Test_Date, End_Date)
+
+save(CE, file = "CE.Rdata")
 
 CE_days_fill <- CE %>%
   rowwise() %>%
@@ -507,6 +521,7 @@ CE_all_total <- E_all %>%
   select(Type, Cases)
 
 CE_Tab <- bind_rows(CE_yest, CE_spring_total, CE_all_total)
+save(CE_Tab, file = "CE_Tab.Rdata")
 
 #Maximum count needed for graphs
 mCE <- CE_days_fill %>%
@@ -537,18 +552,14 @@ mCE <- CE_days_fill %>%
 T2 <- T %>%
   mutate(test_date = as_date(test_time)) %>%
   group_by(id, test_date, employee) %>%
-  summarise(test_result = prod(test_result)) %>%
-  mutate(test_result = case_when(
-    id == 1610566 ~ 0,    #Fix data entry error
-    TRUE ~ test_result
-  ))
+  summarise(test_result = prod(test_result))
   
 
 #Weekly  
 TW <- T2 %>%
   group_by(employee) %>%
   summarise(Cases = sum(test_result), Total = n()) %>%
-  mutate(Type = c("Students: Spring Semester", "Employees: Spring Semesester"),
+  mutate(Type = c("Students: Spring Semester", "Employees: Spring Semester"),
          Percent = percent(case_when(
            Total == 0 ~ 0,
            TRUE ~ Cases/Total
@@ -568,10 +579,12 @@ PTW <- T2 %>%
   select(Type, Total, Cases, Percent)
 
 T_Tab <- bind_rows(PTW, TW)
+save(T_Tab, file = "T_Tab.Rdata")
 
 T_Pos <- T2 %>%
   group_by(test_date, employee) %>%
   summarise(Cases = sum(test_result), Total = n())
+save(T_Pos, file = "T_Pos.Rdata")
 
 T_Pos_W <- T_Pos%>%
   group_by(employee) %>%
@@ -584,6 +597,7 @@ T_Pos_W <- T_Pos%>%
            Total == 0 ~ 0,
            TRUE ~ Cases/Total
          ))
+save(T_Pos_W, file = "T_Pos_W.Rdata")
 
 #Colors used for graphs
 gg_color_hue <- function(n) {
