@@ -52,7 +52,7 @@ SS <- S_spring %>%
   clean_names() %>%#In case of emergency: unnest_longer(problem_column,indices_include = FALSE)
   select(id:first_name, quarantine_isolation_location:test_result,
          actual_release_from_quarantine_isolation,
-         complete, positive_at_home) %>%
+         complete, positive_before_coming) %>%
 #  filter(is.na(positive_at_home)) %>%
   rename(location = quarantine_isolation_location,
          tqs = travel_quarantine_start_date,
@@ -86,14 +86,16 @@ SS <- S_spring %>%
   )) %>%
   mutate(location = factor(case_when(
     !is.na(tqs) & type != "Isolation" ~ "Grace_travel",
-    !is.na(positive_at_home) ~ "Before",
+    !is.na(positive_before_coming) ~ "Before",
     tolower(substring(location, 1, 4)) == "home" ~ "Home",
     tolower(substring(location, 1, 4)) == "off " ~ "Home",
     tolower(substring(location, 1, 4)) == "fami" ~ "Home",
     tolower(substring(location, 1, 4)) == "poss" ~ "Home",
     tolower(substring(location, 1, 4)) == "comm" ~ "Home",
     TRUE ~ "Grace"), levels = c("Before", "Home", "Grace_travel", "Grace"))) %>%
-  select(id, first_name, last_name, location, type, test_result, test_date, started, end_date)
+  select(id, first_name, last_name, location, type, test_result, test_date, started, end_date) %>%
+  #Take out weird ones
+  filter(!(id == 1590824 & started == as.Date("2021-02-08")))
 
 SF <- S_fall %>%
   clean_names() %>%
@@ -883,10 +885,9 @@ SS_days_fill %>%
     ylab("Students") + 
     xlab("Date")+
     geom_vline(xintercept =  seq(spring, last, "months"))+
-    geom_hline(yintercept =  seq(0, mIS+1, 10)/cf, linetype = "dotted")
-#+
-#    annotate("text", x = spring+2,
-#             y = seq(11, mIS, 10)/cf, label = seq(10, mIS, 10))
+    geom_hline(yintercept =  seq(0, mIS+1, 10)/cf, linetype = "dotted")+
+    annotate("text", x = spring+2,
+             y = (1+seq(10, cf-1, 10))/cf, label = seq(10, cf-1, 10))
 ```
 
 ### Isolated Employees
@@ -1212,5 +1213,8 @@ plot_usmap("counties",
                   label = labels))
 ```
 
-save(SS, file = "SS.Rdata")
+```{r}
+save(SS, file = "SS2.Rdata")
 save(T_Pos, file = "T_Pos.Rdata")
+```
+

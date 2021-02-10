@@ -67,7 +67,9 @@ T_Pos_W %>%
   filter(!employee) %>%
   ungroup() %>%
   select(-employee) %>%
+  mutate(Percent = percent(Percent, accuracy = 0.01)) %>%
   column_to_rownames('test_date') %>%
+  rename(Tests_Week = Total, Positives_Week = Cases) %>%
   write.xlsx2(file=t_sheet, sheetName="Weekly_Student_Percent", append=TRUE)
   
 wb <- loadWorkbook(t_sheet)
