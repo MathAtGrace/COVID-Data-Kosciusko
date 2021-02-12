@@ -5,6 +5,7 @@
 #quarantined students
 library(xlsx)
 library(tidyverse)
+library(scales)
 #write.xlsx(dataframe1, file="filename.xlsx", sheetName="sheet1", row.names=FALSE)
 #write.xlsx(dataframe2, file="filename.xlsx", sheetName="sheet2", append=TRUE, row.names=FALSE)
 

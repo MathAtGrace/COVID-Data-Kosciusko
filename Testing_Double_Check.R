@@ -85,17 +85,21 @@ TCS <- T_hour %>%
 
 CS %>%
   full_join(TCS, by = c("id", "first_name", "last_name")) %>%
-  filter(is.na(test_time) | is.na(test_result),
-         is.na(end_date) | end_date >= yest)%>%
-  select(-end_date) %>%
+  filter(is.na(test_time) | is.na(test_result))%>%
+  mutate(end_date = case_when(
+    end_date >= yest ~ as.Date(NA),
+    TRUE ~ end_date
+  )) %>%
   sheet_write(ss = "https://docs.google.com/spreadsheets/d/1uFaRFBb7rykhLhOxwiWintvBILuO5wQMTdQ0oNaKkW8/edit#gid=0",
               sheet = 1)
 
 CS %>%
   full_join(TCS, by = c("id", "first_name", "last_name")) %>%
-  filter(is.na(test_time) | is.na(test_result),
-         is.na(end_date) | end_date >= yest)%>%
-  select(-end_date) %>%
+  filter(is.na(test_time) | is.na(test_result))%>%
+  mutate(end_date = case_when(
+    end_date >= yest ~ as.Date(NA),
+    TRUE ~ end_date
+  )) %>%
   View()
 
 CE %>%

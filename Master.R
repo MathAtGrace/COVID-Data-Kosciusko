@@ -5,7 +5,7 @@ source("Google_Sheets.R")
 source("Indiana_Data.R")
 source("Testing_Data.R")
 
-this_day = Sys.Date()
+this_day = Sys.Date()-2
 save(this_day, file = "this_day.Rdata")
 
 #The COVID Dashboard
