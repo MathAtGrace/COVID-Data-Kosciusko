@@ -11,6 +11,7 @@ T <- read.csv("M:/COVID_dashboard/COVID_dashboard_test_results.csv") %>%
          test_result = case_when(
            id == 1618586 & test_time == as_datetime("2021-02-03 16:04:25") ~ FALSE,
            id == 1610566 & test_time == as_datetime("2021-01-25 12:59:04") ~ FALSE,
+           id == 1595908 & test_time == as_datetime("2021-02-16 12:37:16") ~ FALSE,
            TRUE ~ (test_result == "P")
          ))%>%
   select(-sent_to_state_dt)

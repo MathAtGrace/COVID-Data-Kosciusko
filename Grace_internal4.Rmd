@@ -625,7 +625,7 @@ names(c_vals2) <- c("Positive", "Negative")
 
 Notes and Irregularities:
 
-
+  - (2/18) A false positive from student testing was corrected for student ID 1595908 on 2/16.
   - (1/28) Students who tested positive before coming to Grace are labeled as `Before` and are not included in total numbers.
   - (1/27) The reported total quarantines are currently not counting 13 quarantines from last fall that turned into isolations when those students showed symptoms.  This way, one can report the sum of our quarantines and isolations without double counting any stuedents.
   - (1/27) Quarantines from international travel are no longer counted among `Total` or graphed.
