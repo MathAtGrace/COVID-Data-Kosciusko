@@ -434,11 +434,13 @@ IE_days_fill <- IE%>%
   tibble()
 
 IE_yest <- IE_days_fill %>%
+  #The line below is to create bogus data so that the summarization works
+  add_row(Last_Name = NA, First_Name = NA, Date = yest) %>%
   filter(Date == yest) %>%
   group_by(Date, .drop = FALSE) %>%
   summarise(Isolated = n()) %>%
   ungroup() %>%
-  mutate(Isolated = Isolated) %>% 
+  mutate(Isolated = Isolated-1) %>%
   mutate(Type = str_glue("Active on ", format(yest, "%a %b %d"))) %>%
   select(Type, Isolated)
 
