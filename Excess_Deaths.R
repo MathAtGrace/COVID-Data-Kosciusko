@@ -54,11 +54,17 @@ D <- cdc_excess_deaths() %>%
 #View(D)
 
 
+#p = D %>%
+#  ggplot(aes(x = date, y = deaths_per_mil)) +
+#  geom_line() +
+#  geom_line(aes(y = average_expected_per_mil)) +
+#  geom_line(aes(y = covid_deaths_per_mil)) 
+
 p = D %>%
-  ggplot(aes(x = date, y = deaths_per_mil)) +
+  ggplot(aes(x = date, y = deaths)) +
   geom_line() +
-  geom_line(aes(y = average_expected_per_mil)) +
-  geom_line(aes(y = covid_deaths_per_mil)) 
+  geom_line(aes(y = average_expected_count)) +
+  geom_line(aes(y = covid_deaths)) 
 
 plots = D %>%
   group_by(state) %>%
@@ -68,3 +74,11 @@ ggsave(filename = "ExcessDeaths.pdf",
        plot = marrangeGrob(plots[[2]], nrow = 1, ncol = 1),
        width = 15, height = 9
 )
+
+D %>%
+  filter(date > lubridate::as_date("2020-03-15")) %>%
+  group_by(state) %>%
+  summarise(excess_lower_estimate = sum(excess_lower_estimate, na.rm = TRUE),
+            excess_higher_estimate = sum(excess_higher_estimate, na.rm = TRUE),
+            covid_deaths = sum(covid_deaths, na.rm = TRUE)) %>%
+  write.csv(file = "ExcessDeaths.csv")
