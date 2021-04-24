@@ -6,7 +6,7 @@ S_spring <- read_sheet("https://docs.google.com/spreadsheets/d/107-RZMp8JifihWCQ
                      sheet = "Quarantine/Isolation", skip = 1)
 
 #Backup Plan - The Copycat spreadsheet
-#S_spring <- read_sheet("https://docs.google.com/spreadsheets/d/1hYSSaiyIbV_pjBs3ljTwF9kf5YI0Ewj_bNEt7tNYMtA/edit#gid=0",
+#S_spring <- read_sheet("https://docs.google.com/spreadsheets/d/107-RZMp8JifihWCQymwHVtJ7teUtVQL1cSC4O1H0fLo/edit#gid=0",
 #                     skip = 1)
 save(S_spring, file = "SS.Rdata")
 
