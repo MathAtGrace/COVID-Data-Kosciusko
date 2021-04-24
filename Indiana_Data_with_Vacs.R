@@ -2,6 +2,8 @@ library(httr)
 library(readxl)
 library(tidyverse)
 library(tigris)
+library(scales)
+library(lubridate)
 
 #Kosciusko Data
 url = "https://hub.mph.in.gov/dataset/bd08cdd3-9ab1-4d70-b933-41f9ef7b809d/resource/afaa225d-ac4e-4e80-9190-f6800c366b58/download/covid_report_county_date.xlsx"
@@ -53,6 +55,25 @@ ggplot(In_zip) +
     na.value = "grey50"
   )
 
+w_zips = c(46580, 46590, 46582, 46538, 46555, 46562, 46510,
+           46508, 46539, 46570, 46504, 46764, 46787, 46946,
+           46982, 46725, 46760, 46550, 46524, 46563, 46506,
+           46542, 46553, 46567, 46732, 46760, 46975, 46910,
+           46982, 46962, 46946, 46787, 46501)
+
+In_zip %>%
+  filter(GEOID10 %in% w_zips) %>%
+  mutate(vac_per = percent(partial, accuracy = 1),
+         zip_text = str_glue("{GEOID10} \n {vac_per}")) %>%
+  ggplot(aes(fill = partial, label = zip_text)) +
+  geom_sf() +
+  scale_fill_gradient(
+    low = "sky blue",
+    high = "dark green",
+    na.value = "grey50"
+  )+
+  geom_sf_label(size = 3)
+
 Kos_zip <- zctas(cb = TRUE, starts_with = "465", class = "sf")
 
 Kos_zip <- Kos_zip %>%
@@ -70,8 +91,17 @@ ggplot(Kos_zip) +
 #Hosp Census Data
 url = "https://hub.mph.in.gov/dataset/d57037d4-6dab-4f09-9905-9349e9180ce9/resource/efa7b90c-b204-4618-9436-e33aac140e71/download/covid_report_puibed_date.xlsx"
 GET(url, write_disk(tf <- tempfile(fileext = ".xlsx")))
-IN_hosps <- read_excel(tf)
-#could graph?
+IN_hosps <- read_excel(tf) %>%
+  rename(total = 'TOTAL COVID19 PATIENTS',
+         confirmed = 'CONFIRMED COVID19 PATIENTS',
+         pui = 'COVID19 PUI PATIENTS',
+         date = DATE) %>%
+  mutate(date = as_date(date))
+  
+IN_hosps %>%  
+  ggplot(aes(x = date, y = total)) +
+  geom_line() + 
+  scale_y_continuous(limits = c(0,NA))
 
 #Case Data
 url = "https://hub.mph.in.gov/dataset/6b57a4f2-b754-4f79-a46b-cff93e37d851/resource/46b310b9-2f29-4a51-90dc-3886d9cf4ac1/download/covid_report.xlsx"

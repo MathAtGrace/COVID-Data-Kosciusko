@@ -30,6 +30,7 @@ library(kableExtra)
 library(lubridate)
 library(RcppRoll)
 library(janitor)
+library(tigris)
 
 #Load Student and Employee Data
 load("SF.Rdata")
@@ -628,11 +629,7 @@ names(c_vals2) <- c("Positive", "Negative")
 
 Notes and Irregularities:
 
-  - (2/18) A false positive from student testing was corrected for student ID 1595908 on 2/16.
-  - (1/28) Students who tested positive before coming to Grace are labeled as `Before` and are not included in total numbers.
-  - (1/27) The reported total quarantines are currently not counting 13 quarantines from last fall that turned into isolations when those students showed symptoms.  This way, one can report the sum of our quarantines and isolations without double counting any stuedents.
-  - (1/27) Quarantines from international travel are no longer counted among `Total` or graphed.
-  - (1/26) The positivity rate was changed to only show the positivity rate of the weekly tests at Grace.
+  - (4/19) Added two pages at the end with vaccine information for the state and for local zip codes.
 
 \newpage
 
@@ -1216,8 +1213,82 @@ plot_usmap("counties",
                   label = labels))
 ```
 
-```{r}
+```{r save-stuff}
 save(SS, file = "SS2.Rdata")
 save(T_Pos, file = "T_Pos.Rdata")
+```
+
+
+```{r vaccines}
+#Vaccinations by Zip
+url = "https://hub.mph.in.gov/dataset/d0cb45af-c9de-40f5-9394-de367c17a7a1/resource/c496b384-f543-417e-912f-995caebf5fc0/download/vaccinations-by-zip-with-population.csv"
+vacs <- read.csv(url)%>%
+  mutate(zip_cd = as.character(zip_cd),
+         first = case_when(
+           first_dose_administered == "Suppressed" ~ 0,
+           TRUE ~ parse_double(first_dose_administered)
+         ),
+         single = case_when(
+           single_dose_administered == "Suppressed" ~ 0,
+           TRUE ~ parse_double(single_dose_administered)
+         ),
+         partial = case_when(
+           (first + single) > 0 ~ (first + single)/population_16_and_over,
+           TRUE ~ as.numeric(NA)
+         )
+  )
+
+In_zip <- zctas(cb = TRUE, state = "Indiana", class = "sf")
+
+In_zip <- In_zip %>%
+  inner_join(vacs, 
+            by = c("ZCTA5CE10" = "zip_cd"))
+
+w_zips = c(46580, 46590, 46582, 46538, 46555, 46562, 46510,
+           46508, 46539, 46570, 46504, 46764, 46787, 46946,
+           46982, 46725, 46760, 46550, 46524, 46563, 46506,
+           46542, 46553, 46567, 46732, 46760, 46975, 46910,
+           46982, 46962, 46946, 46787, 46501)
+```
+
+\newpage
+
+# Vaccines
+
+## Statewide vaccine percentages
+
+The following map shows percentages of adults who have had at least one vaccine shot.  Percentages are based on population census data from 10-11 years ago.
+
+```{r vacs-state, fig.width=12, fig.height=14}
+ggplot(In_zip) +
+  geom_sf(aes(fill = partial)) +
+  scale_fill_gradient(
+    low = "#FFCC99",
+    high = "dark green",
+    na.value = "grey50"
+  )
+```
+
+\newpage
+
+## Regional vaccine percentages
+
+The following map shows percentages of adults who have had at least one vaccine shot.  Percentages are based on population census data from 10-11 years ago.
+
+The region below extends from Plymouth (46563) in the West to Columbia City (46725) in the East.
+
+```{r vacs-zips, fig.width=12, fig.height=12}
+In_zip %>%
+  filter(GEOID10 %in% w_zips) %>%
+  mutate(vac_per = percent(partial, accuracy = 1),
+         zip_text = str_glue("{GEOID10} \n {vac_per}")) %>%
+  ggplot(aes(fill = partial, label = zip_text)) +
+  geom_sf() +
+  scale_fill_gradient(
+    low = "#FFCC99",
+    high = "dark green",
+    na.value = "grey50"
+  )+
+  geom_sf_label(size = 3)
 ```
 
