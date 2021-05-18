@@ -629,6 +629,7 @@ names(c_vals2) <- c("Positive", "Negative")
 
 Notes and Irregularities:
 
+  - (5/14) Vaccine percentages are now based on population 12 and over.  Previously, they were based on population 16 and over.
   - (4/19) Added two pages at the end with vaccine information for the state and for local zip codes.
 
 \newpage
@@ -1233,7 +1234,7 @@ vacs <- read.csv(url)%>%
            TRUE ~ parse_double(single_dose_administered)
          ),
          partial = case_when(
-           (first + single) > 0 ~ (first + single)/population_16_and_over,
+           (first + single) > 0 ~ (first + single)/population_12_and_over,
            TRUE ~ as.numeric(NA)
          )
   )
