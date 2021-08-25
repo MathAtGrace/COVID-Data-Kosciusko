@@ -5,10 +5,13 @@ SF21 <- read_sheet("https://docs.google.com/spreadsheets/d/1cAolnje3crsdF23m_EBU
                    sheet = "Quarantine/Isolation", skip = 1)
 save(SF21, file = "data-raw/SF21.Rdata")
 
-
-S_spring <- read_sheet("https://docs.google.com/spreadsheets/d/107-RZMp8JifihWCQymwHVtJ7teUtVQL1cSC4O1H0fLo/edit?ts=600b0c97#gid=0",
-                     sheet = "Quarantine/Isolation", skip = 1)
-save(S_spring, file = "data-raw/SS.Rdata")
+#Inactive sheets that are already saved:
+#SS <- read_sheet("https://docs.google.com/spreadsheets/d/107-RZMp8JifihWCQymwHVtJ7teUtVQL1cSC4O1H0fLo/edit?ts=600b0c97#gid=0",
+#                     sheet = "Quarantine/Isolation", skip = 1)
+#save(SS, file = "data-raw/SS.Rdata")
+#SF <- read_sheet("https://docs.google.com/spreadsheets/d/1Jwp6_vxG2l3JQU-hiZ6XBmI_74H6DcDVnF4g5DBn9ic/edit#gid=0",
+#                       sheet = "Quarantine/Isolation", skip = 1)
+#save(SF, file = "data-raw/SF.Rdata")
 
 #Employee Data
 E <- read_sheet("https://docs.google.com/spreadsheets/d/1M1rKYVYg8bGqYlHjmh51XRNK4JLY5TjMPbrw9_OUaFE/edit#gid=0",
