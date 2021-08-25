@@ -66,7 +66,7 @@ SS <- S_spring21 %>%
   filter(!(id == 1590824 & started == as.Date("2021-02-08")))
 save(SS, file = "data/SS.Rdata")
 
-SF <- S_fall20 %>%
+SF <- S_fall %>%
   clean_names() %>%
   select(id:first_name, location,
          travel_quarantine_start_date:nurse_approved_release_date_estimate_only_until_final,

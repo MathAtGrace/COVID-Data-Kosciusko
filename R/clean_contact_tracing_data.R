@@ -77,6 +77,7 @@ CS <- SF21 %>%
 
 save(CS, file = "data/CS.Rdata")
 
+
 S_all <- bind_rows(SS, SF, SF21)
 save(S_all, file = "data/S_all.Rdata")
 
@@ -265,7 +266,7 @@ CS_all_total <- S_all %>%
   pivot_wider(names_from = location, values_from = n) %>%
   mutate(Total = Grace + Home) %>%
   ungroup() %>%
-  mutate(Type = "20-21 Academic Year Total") %>%
+  mutate(Type = "Total of Last Two Years") %>%
   select(Type, Total, Grace, Home, Before)
 
 CS_Tab <- bind_rows(CS_yest, CS_f21_total, CS_all_total)
@@ -278,7 +279,7 @@ mCS <- S_days_fill %>%
   summarise(n = n()) %>%
   slice(which.max(n)) %>%
   pull(n)
-save(mCS, file = "data/mCS")
+save(mCS, file = "data/mCS.Rdata")
 
 ################################################################################
 #Employee Data
@@ -303,6 +304,7 @@ QE_days_fill <- QE %>%
   rowwise() %>%
   do(data.frame(.[1:2], Date = seq(.$Date, .$End_Date, by = "1 day"))) %>%
   tibble()
+save(QE_days_fill, file = "data/QE_days_fill.Rdata")
 
 QE_yest <- QE_days_fill %>%
   #The line below is to create bogus data so that the summarization works
@@ -359,6 +361,7 @@ IE_days_fill <- IE%>%
   rowwise() %>%
   do(data.frame(.[1:2], Date = seq(.$Isolated, .$End_Date, by = "1 day"))) %>%
   tibble()
+save(IE_days_fill, file = "data/IE_days_fill.Rdata")
 
 IE_yest <- IE_days_fill %>%
   #The line below is to create bogus data so that the summarization works
@@ -420,6 +423,8 @@ CE_days_fill <- CE %>%
   rowwise() %>%
   do(data.frame(.[1:2], Test_Date = seq(.$Test_Date, .$End_Date, by = "1 day"))) %>%
   tibble()
+save(CE_days_fill, file = "data/CE_days_fill.Rdata")
+
 
 CE_yest <- CE_days_fill %>%
   #The line below is to create bogus data so that the summarization works

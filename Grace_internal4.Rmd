@@ -35,17 +35,17 @@ library(tigris)
 #Load Student and Employee Data
 #load("data/SF.Rdata")
 #load("data/SS.Rdata")
-#load("data/SF21.Rdata")
+load("data/SF21.Rdata")
 #load("data/E.Rdata")
-load("data/IN.Rdata")
-load("data/I.Rdata")
-load("data/T.Rdata")
+load("data/S_days_fill.Rdata")
+load("data-raw/IN.Rdata")
+load("data-raw/I.Rdata")
 
 K <- subset(IN_counties, IN_counties$COUNTY_NAME == "Kosciusko")
 
 #Important dates
-f20 <- as.Date("2020-07-20")
-s21 <- as.Date("2021-01-01")
+#f20 <- as.Date("2020-07-20")
+#s21 <- as.Date("2021-01-01")
 f21 <- as.Date("2021-08-14")
 load("data/this_day.Rdata")
 yest <- this_day-1
@@ -57,7 +57,7 @@ gg_color_hue <- function(n) {
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 c_vals = gg_color_hue(4)
-names(c_vals) <- rev(levels(SS$location))
+names(c_vals) <- rev(levels(SF21$location))
 
 c_vals2 = gg_color_hue(2)
 names(c_vals2) <- c("Positive", "Negative")
@@ -87,6 +87,7 @@ Notes and Irregularities:
 Grace College required students to test negative before arriving on campus, and those that tested positive before coming are listed in the column `Before`.  These are not counted in our total, since they never set foot on campus.
 
 ```{r student_cases_table}
+load("data/CS_Tab.Rdata")
 CS_Tab %>%
   select(Type, Total, Home, Grace, Before)%>%
   kbl(caption = "Student Cases", booktabs = TRUE, format = "latex") %>%
@@ -97,9 +98,10 @@ CS_Tab %>%
 
 
 ```{r student_cases_vis, fig.height = 4}
+load("data/mCS.Rdata")
 adjust = 1
-SS_days_fill %>%
-  filter(test_result == "p", location != "Before") %>%
+S_days_fill %>%
+  filter(test_result == "p") %>%   #, location != "Before"
   ggplot(aes(x = date, fill = location)) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
@@ -109,7 +111,7 @@ SS_days_fill %>%
     scale_x_date(date_labels="%b %d",
                  date_breaks  = "7 days",
                  minor_breaks = "1 day",
-                 limits = c(spring, last)) +
+                 limits = c(f21, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
     scale_fill_manual(values = c_vals) +
     # Make this as high as the tallest column
@@ -120,15 +122,17 @@ SS_days_fill %>%
           legend.position="bottom") + 
     ylab("Students") + 
     xlab("Date")+
-    geom_hline(yintercept =  seq(0, mCS+1, 10)/mCS, linetype = "dotted")+
-    geom_vline(xintercept =  seq(spring, last, "months"))+
-    annotate("text", x = spring+2,
-             y = seq(11, mCS, 10)/mCS, label = seq(10, mCS, 10))
+    geom_vline(xintercept =  seq(f21, last, "months"))
+#+
+#    geom_hline(yintercept =  seq(0, mCS+1, 10)/mCS, linetype = "dotted")+
+#    annotate("text", x = f21+2,
+#             y = seq(11, mCS, 10)/mCS, label = seq(10, mCS, 10))
 ```
 
 ### Confirmed Cases Among Employees
 
 ```{r employee_cases_table}
+load("data/CE_Tab.Rdata")
 CE_Tab %>%
   kable(caption = "Employee Cases",
         booktabs = TRUE,
@@ -138,6 +142,8 @@ CE_Tab %>%
 ```
 
 ```{r employee_cases_vis}
+load("data/CE_days_fill.Rdata")
+load("data/mCE.Rdata")
 adjust = 1
 CE_days_fill %>%
   ggplot(aes(x = Test_Date, fill = "red")) + 
@@ -148,7 +154,7 @@ CE_days_fill %>%
     scale_x_date(date_labels="%b %d",
                  date_breaks  = "7 days",
                  minor_breaks = "1 day",
-                 limits = c(spring, last)) +
+                 limits = c(f21, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
     # Make this as high as the tallest column
     coord_fixed(ratio = max(mCE,5)) +
@@ -158,19 +164,23 @@ CE_days_fill %>%
     ylab("Employees") + 
     xlab("Date") +
     theme(legend.position = "none")+
-    geom_hline(yintercept =  seq(0, mCE, 10)/mCE, linetype = "dotted")+
-    geom_vline(xintercept =  seq(spring, last, "months"))#+
-#    annotate("text", x = spring+2,
+    geom_vline(xintercept =  seq(f21, last, "months"))
+#+
+#    geom_hline(yintercept =  seq(0, mCE, 10)/mCE, linetype = "dotted")+
+#    annotate("text", x = f21+2,
 #             y = seq(11, mCE, 10)/cf, label = seq(10, mCE, 10))
 ```
 
 \newpage
 
-The number of cases below is less than the number of cases on the last page. It does not include students who tested positive before arriving on campus, of which there are 2, and it does not include students who tested at home while quarantining, of which there are several.
+```{r testing_table, eval=FALSE}
+#Testing page is hidden
 
-# Student Testing
+#The number of cases below is less than the number of cases on the last page. It does not include students who tested positive before arriving on campus, of which there are 2, and it does not include students who tested at home while quarantining, of which there are several.
 
-```{r testing_table}
+# # Student Testing
+
+load("data/T_Tab.Rdata")
 T_Tab %>%
   kbl(caption = "Student Testing",
       booktabs = TRUE, format = "latex",
@@ -181,7 +191,7 @@ T_Tab %>%
   kable_styling(latex_options = "hold_position")
 ```
 
-```{r student_testing_percent, fig.height=3}
+```{r student_testing_percent, fig.height=3, eval=FALSE}
 T_Pos_W %>%
   filter(employee == FALSE) %>%
   ggplot(aes(x = test_date, y = Percent)) +
@@ -204,7 +214,7 @@ T_Pos_W %>%
   scale_color_manual(values = c_vals2)
 ```
 
-```{r student_testing, fig.height=6}
+```{r student_testing, fig.height=6, eval = FALSE}
 T_Pos %>%
   filter(employee == FALSE) %>%
   mutate(Negative = Total - Cases) %>%
@@ -234,30 +244,8 @@ T_Pos %>%
   scale_fill_manual(values = c_vals2)
 ```
 
-```{r employee_testing_percent, fig.height=2, eval = FALSE}
-T_Pos_W %>%
-  filter(employee == TRUE) %>%
-  ggplot(aes(x = test_date, y = Percent)) +
-  geom_point(size = 3)+
-  geom_line(size = 0.5, color = "blue", linetype = "dashed") +
-  scale_x_date(date_labels="%b %d",
-               date_breaks  = "7 days",
-               minor_breaks = "1 day",
-               limits = c(spring, last))+ 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1),
-                     limit=c(0,.02))+
-  ggtitle("Employee Testing - 7 Day Rolling Average") + 
-    theme(plot.title = element_text(hjust = 0.5, size = 20),
-          legend.text = element_text(size = 15),
-          legend.position="none") + 
-  ylab("Percent Positive") + 
-  xlab("Date")+
-  geom_vline(xintercept =  seq(spring, last, by = "months")) +
-  geom_hline(yintercept = 0) +
-  scale_color_manual(values = c_vals2)
-```
 
-```{r employee_testing, fig.height=2}
+```{r employee_testing, fig.height=2, eval = FALSE}
 T_Pos %>%
   filter(employee == TRUE) %>%
   mutate(Negative = Total - Cases) %>%
@@ -285,9 +273,10 @@ T_Pos %>%
   geom_vline(xintercept =  seq(spring, last, by = "months")) +
   geom_hline(yintercept = 0) +
   scale_fill_manual(values = c_vals2)
+
+# \newpage
 ```
 
-\newpage
 
 # Isolated
 
@@ -296,8 +285,9 @@ Grace College required students to test negative before arriving on campus, and 
 ### Isolated Students
 
 ```{r studend_isolations_table}
+load("data/IS_Tab.Rdata")
 IS_Tab %>%
-  select(Type, Total, Home, Grace, Before)%>%
+  select(Type, Total, Home, Grace)%>%
   kbl(caption = "Student Isolations",
         booktabs = TRUE, format = "latex") %>%
   kable_styling(latex_options = "striped")%>%
@@ -306,9 +296,10 @@ IS_Tab %>%
 
 
 ```{r student_isolations_vis, fig.height = 4}
+load("data/mIS.Rdata")
 adjust = 1
 cf = max(mIS+2, 5)
-SS_days_fill %>%
+S_days_fill %>%
   filter(type == "Isolation", location != "Before") %>%
   ggplot(aes(x = date, fill = location)) + 
     geom_dotplot(method = "histodot",
@@ -319,7 +310,7 @@ SS_days_fill %>%
     scale_x_date(date_labels="%b %d",
                  date_breaks  = "7 days",
                  minor_breaks = "1 day",
-                 limits = c(spring, last)) +
+                 limits = c(f21, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
     scale_fill_manual(values = c_vals) +
     # Make this as high as the tallest column
@@ -330,15 +321,17 @@ SS_days_fill %>%
           legend.position="bottom") + 
     ylab("Students") + 
     xlab("Date")+
-    geom_vline(xintercept =  seq(spring, last, "months"))+
-    geom_hline(yintercept =  seq(0, mIS+1, 10)/cf, linetype = "dotted")+
-    annotate("text", x = spring+2,
-             y = (1+seq(10, cf-1, 10))/cf, label = seq(10, cf-1, 10))
+    geom_vline(xintercept =  seq(f21, last, "months"))
+#+
+#    geom_hline(yintercept =  seq(0, mIS+1, 10)/cf, linetype = "dotted")+
+#    annotate("text", x = f21+2,
+#             y = (1+seq(10, cf-1, 10))/cf, label = seq(10, cf-1, 10))
 ```
 
 ### Isolated Employees
 
 ```{r, employee_isolations_table}
+load("data/IE_Tab.Rdata")
 IE_Tab %>%
   kable(caption = "Employee Isolations",
         booktabs = TRUE, format = "latex") %>%
@@ -347,6 +340,8 @@ IE_Tab %>%
 ```
 
 ```{r employee_isolations_vis}
+load("data/mIE.Rdata")
+load("data/IE_days_fill.Rdata")
 cf = max(mIE+2, 5)
 IE_days_fill %>%
   ggplot(aes(x = Date, fill = "red")) + 
@@ -356,7 +351,7 @@ IE_days_fill %>%
     scale_x_date(date_labels="%b %d",
                  date_breaks  = "7 days",
                  minor_breaks = "1 day",
-                 limits = c(spring, last)) +
+                 limits = c(f21, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
     # Make this as high as the tallest column
     coord_fixed(ratio = cf) +
@@ -365,10 +360,11 @@ IE_days_fill %>%
           legend.text = element_text(size = 15)) + 
     ylab("Employees") + 
     xlab("Date") +
-    theme(legend.position = "none") +
-    geom_hline(yintercept =  seq(0, mIE, 10)/cf, linetype = "dotted")+
-    geom_vline(xintercept =  seq(spring, last, "months"))#+
-#    annotate("text", x = spring+2,
+    theme(legend.position = "none")+
+    geom_vline(xintercept =  seq(f21, last, "months"))
+#+
+#    geom_hline(yintercept =  seq(0, mIE, 10)/cf, linetype = "dotted")#+
+#    annotate("text", x = f21+2,
 #             y = seq(11, mIE, 10)/cf, label = seq(10, mIE, 10))
 ```
 
@@ -381,8 +377,9 @@ IE_days_fill %>%
 In the table below, `Grace_travel` are quarentines from international travel, and are not counted among the category `Grace` or the category `Total`.  Neither are they graphed below.  This is because these quarantines are from international travel, not exposure to COVID-19.
 
 ```{r student_quarantines_table}
+load("data/QS_Tab.Rdata")
 QS_Tab %>%
-  select(Type, Total, Home, Grace, Grace_travel) %>%
+  select(Type, Total, Home, Grace) %>%
   kable(caption = "Student Quarantines",
         booktabs = TRUE, format = "latex") %>%
   kable_styling(latex_options = "striped")%>%
@@ -392,9 +389,10 @@ QS_Tab %>%
 
 
 ```{r student_quarantines_vis, fig.height=4}
+load("data/mQS.Rdata")
 adjust = 1
 cf = max(mQS, 5)
-SS_days_fill %>%
+S_days_fill %>%
   filter(type == "Quarantine", location != "Grace_travel") %>%
   ggplot(aes(x = date, fill = location)) + 
     geom_dotplot(method = "histodot",
@@ -405,7 +403,7 @@ SS_days_fill %>%
     scale_x_date(date_labels="%b %d",
                  date_breaks  ="7 days",
                  minor_breaks = "1 day",
-                 limits = c(spring, last)) +
+                 limits = c(f21, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
     scale_fill_manual(values = c_vals) +
     # Make this as high as the tallest column
@@ -416,15 +414,17 @@ SS_days_fill %>%
           legend.position="bottom") + 
     ylab("Students") + 
     xlab("Date") +
-    geom_hline(yintercept =  seq(0, mQS, 10)/cf, linetype = "dotted")+
-    geom_vline(xintercept =  seq(spring, last, "months"))+
-    annotate("text", x = spring+2,
-             y = (1+seq(10, mQS, 10))/cf, label = seq(10, mQS, 10))
+    geom_vline(xintercept =  seq(f21, last, "months"))
+#+
+#    geom_hline(yintercept =  seq(0, mQS, 10)/cf, linetype = "dotted")+
+#    annotate("text", x = f21+2,
+#             y = (1+seq(10, mQS, 10))/cf, label = seq(10, mQS, 10))
 ```
 
 ### Quarantined Employees
 
 ```{r employee_quarantines_table}
+load("data/QE_Tab.Rdata")
 QE_Tab %>%
   kable(caption = "Employee Quarantines",
         booktabs = TRUE, format = "latex") %>%
@@ -433,6 +433,8 @@ QE_Tab %>%
 ```
 
 ```{r employee_quarantines_vis}
+load("data/QE_days_fill.Rdata")
+load("data/mQE.Rdata")
 adjust = 1
 cf = max(mQE+2, 5)
 QE_days_fill %>%
@@ -445,7 +447,7 @@ QE_days_fill %>%
     scale_x_date(date_labels="%b %d",
                  date_breaks  = "7 days",
                  minor_breaks = "1 day",
-                 limits = c(spring, last)) +
+                 limits = c(f21, last)) +
     scale_y_continuous(NULL, breaks = NULL) + 
     # Make this as high as the tallest column
     coord_fixed(ratio = cf) +
@@ -454,10 +456,11 @@ QE_days_fill %>%
           legend.text = element_text(size = 15)) + 
     ylab("Employees") + 
     xlab("Date") +
-    theme(legend.position = "none") +
-    geom_hline(yintercept =  seq(0, mQE, 10)/cf, linetype = "dotted")+
-    geom_vline(xintercept =  seq(spring, last, "months"))#+
- #   annotate("text", x = first,
+    theme(legend.position = "none")+
+    geom_vline(xintercept =  seq(f21, last, "months"))
+#+
+#    geom_hline(yintercept =  seq(0, mQE, 10)/cf, linetype = "dotted")+
+ #   annotate("text", x = f21,
  #            y = seq(1, mQE+1, 10)/cf, label = seq(0, mQE, 10))
 ```
 
@@ -612,9 +615,9 @@ ggplot(subset(I, DATE <= yest - 7), aes(x = DATE, y = POSITIVITY_RATE_ALL_TESTS/
 The map below displays the cases per 100,000 per day averaged over the past week and the positivity rate for unique individuals averaged over the previous week.  The coloring scheme is relative, it colors the best county white and the worst county red.
 
 ```{r I_map, fig.width=12, fig.height=14}
-lat_and_long <- read_excel("lat_and_long.xlsx")
+lat_and_long <- read_excel("data/lat_and_long.xlsx")
 lat_and_long$COUNTY_NUMERIC <- lat_and_long$COUNTY_NUMERIC + 18000
-load("county_populations.RData")
+load("data/county_populations.RData")
 county_data <- merge(x = pops, y = lat_and_long,
                      by.x = "key_numeric",
                      by.y = "COUNTY_NUMERIC")
@@ -659,13 +662,8 @@ plot_usmap("counties",
                   label = labels))
 ```
 
-```{r save-stuff}
-save(SS, file = "SS2.Rdata")
-save(T_Pos, file = "T_Pos.Rdata")
-```
 
-
-```{r vaccines}
+```{r vaccines, message = FALSE}
 #Vaccinations by Zip
 url = "https://hub.mph.in.gov/dataset/d0cb45af-c9de-40f5-9394-de367c17a7a1/resource/c496b384-f543-417e-912f-995caebf5fc0/download/vaccinations-by-zip-with-population.csv"
 vacs <- read.csv(url)%>%
@@ -684,11 +682,11 @@ vacs <- read.csv(url)%>%
          )
   )
 
-In_zip <- zctas(cb = TRUE, state = "Indiana", class = "sf")
+In_zip <- zctas(cb = TRUE, state = "Indiana", class = "sf", year = 2000)
 
 In_zip <- In_zip %>%
   inner_join(vacs, 
-            by = c("ZCTA5CE10" = "zip_cd"))
+            by = c("ZCTA" = "zip_cd"))
 
 w_zips = c(46580, 46590, 46582, 46538, 46555, 46562, 46510,
            46508, 46539, 46570, 46504, 46764, 46787, 46946,
@@ -725,9 +723,9 @@ The region below extends from Plymouth (46563) in the West to Columbia City (467
 
 ```{r vacs-zips, fig.width=12, fig.height=12}
 In_zip %>%
-  filter(GEOID10 %in% w_zips) %>%
+  filter(ZCTA %in% w_zips) %>%
   mutate(vac_per = percent(partial, accuracy = 1),
-         zip_text = str_glue("{GEOID10} \n {vac_per}")) %>%
+         zip_text = str_glue("{ZCTA} \n {vac_per}")) %>%
   ggplot(aes(fill = partial, label = zip_text)) +
   geom_sf() +
   scale_fill_gradient(
