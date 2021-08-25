@@ -1,9 +1,9 @@
 #Try to only do this once or twice a day
 library(googlesheets4)
 
-S_fall21 <- read_sheet("https://docs.google.com/spreadsheets/d/1cAolnje3crsdF23m_EBU-a1KZjTXZLP776CbruXKDfY/edit#gid=0",
+SF21 <- read_sheet("https://docs.google.com/spreadsheets/d/1cAolnje3crsdF23m_EBU-a1KZjTXZLP776CbruXKDfY/edit#gid=0",
                    sheet = "Quarantine/Isolation", skip = 1)
-save(S_fall21, file = "data-raw/SF21.Rdata")
+save(SF21, file = "data-raw/SF21.Rdata")
 
 #Employee Data
 E <- read_sheet("https://docs.google.com/spreadsheets/d/1M1rKYVYg8bGqYlHjmh51XRNK4JLY5TjMPbrw9_OUaFE/edit#gid=0",
