@@ -23,16 +23,17 @@ C <- covid19() %>%
          difconfirmed = prepend(diff(confirmed), 0),
          hosp_per = hosp / population * 100000,
          deaths_per = difdeaths / population * 100000,
-         cases_per = difconfirmed / population * 100000) %>%
+         cases_per = difconfirmed / population * 100000,
+         vac_per = people_vaccinated / population) %>%
   rename(country = administrative_area_level_1) %>%
-  filter(country %in% c("Austria", "Hungary"),
+  filter(country %in% c("Austria", "Hungary", "United States"),
          date >= as.Date("2021-03-01"))
 ```
 
 ```{r}
 C %>%
   ggplot(aes(x = date, y = hosp_per, color = country)) +
-  geom_line() + 
+  geom_line(size = 1) + 
   labs(y = "Hospitalizations per 100,000",
        title = "Hospitalizations")
 ```
@@ -52,3 +53,15 @@ C %>%
   labs(y = "Confirmed Deaths per 100,000",
        title = "Confirmed Deaths")
 ```
+
+```{r}
+```{r}
+C %>%
+  ggplot(aes(x = date, y = vac_per, color = country)) +
+  geom_line(size = 1) + 
+  scale_y_continuous(labels = scales::percent) +
+  labs(y = "Vaccinated",
+       title = "Vacinated")
+```
+```
+
