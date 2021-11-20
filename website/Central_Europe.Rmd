@@ -49,6 +49,6 @@ C %>%
   ggplot(aes(x = date, y = deaths_per, color = country)) +
   geom_smooth(span = 0.1, se = FALSE) + 
   geom_point() +
-  labs(y = "Confirmed Cases per 100,000",
-       title = "Confirmed Cases")
+  labs(y = "Confirmed Deaths per 100,000",
+       title = "Confirmed Deaths")
 ```
