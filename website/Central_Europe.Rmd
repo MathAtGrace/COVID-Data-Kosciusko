@@ -1,0 +1,54 @@
+---
+title: "Central Euorope COVID19"
+author: "Compiled by Dr. Ryan Johnson using data from @COVID19."
+date: "Last updated `r format(Sys.time(), '%A, %B %d, %Y')`"
+output:
+  html_document:
+    df_print: paged
+bibliography: bibliography.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(COVID19)
+library(tidyverse)
+library(zoo)
+```
+
+```{r, results='hide'}
+C <- covid19() %>%
+  mutate(date = as.Date(date),
+         difdeaths = prepend(diff(deaths), 0),
+         difconfirmed = prepend(diff(confirmed), 0),
+         hosp_per = hosp / population * 100000,
+         deaths_per = difdeaths / population * 100000,
+         cases_per = difconfirmed / population * 100000) %>%
+  rename(country = administrative_area_level_1) %>%
+  filter(country %in% c("Austria", "Hungary"),
+         date >= as.Date("2021-03-01"))
+```
+
+```{r}
+C %>%
+  ggplot(aes(x = date, y = hosp_per, color = country)) +
+  geom_line() + 
+  labs(y = "Hospitalizations per 100,000",
+       title = "Hospitalizations")
+```
+```{r}
+C %>%
+  ggplot(aes(x = date, y = cases_per, color = country)) +
+  geom_smooth(span = 0.1, se = FALSE) + 
+  geom_point() +
+  labs(y = "Confirmed Cases per 100,000",
+       title = "Confirmed Cases")
+```
+```{r}
+C %>%
+  ggplot(aes(x = date, y = deaths_per, color = country)) +
+  geom_smooth(span = 0.1, se = FALSE) + 
+  geom_point() +
+  labs(y = "Confirmed Cases per 100,000",
+       title = "Confirmed Cases")
+```

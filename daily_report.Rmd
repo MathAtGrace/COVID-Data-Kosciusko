@@ -33,10 +33,7 @@ library(janitor)
 library(tigris)
 
 #Load Student and Employee Data
-#load("data/SF.Rdata")
-#load("data/SS.Rdata")
 load("data/SF21.Rdata")
-#load("data/E.Rdata")
 load("data/S_days_fill.Rdata")
 load("data-raw/IN.Rdata")
 load("data-raw/I.Rdata")
@@ -56,7 +53,7 @@ gg_color_hue <- function(n) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
-c_vals = gg_color_hue(4)
+c_vals = gg_color_hue(3) #change to 4 if reintroducing Grace_travel
 names(c_vals) <- rev(levels(SF21$location))
 
 c_vals2 = gg_color_hue(2)
@@ -75,7 +72,9 @@ names(c_vals2) <- c("Positive", "Negative")
 
 Notes and Irregularities:
 
-  - This report counts all cases after 8/14/2021 as fall semester.
+  - This report counts all cases that began after 8/14/2021 as fall semester.
+  - On 8/27/2021 an error was corrected regarding the total cases for Kosciusko County and Indiana.  Those totals had previously only counted the last three months.
+  - On 11/5/2021 a new method for determining the end date for employee quarantines and isolations was implemented.  Several employees who had been quarantined were never marked with and end date.  We now count any quarantined employee without an end date to be complete after two weeks.
 
 \newpage
 
@@ -84,7 +83,7 @@ Notes and Irregularities:
 
 ### Confirmed Cases Among Students
 
-Grace College required students to test negative before arriving on campus, and those that tested positive before coming are listed in the column `Before`.  These are not counted in our total, since they never set foot on campus.
+Students that tested positive before coming are listed in the column `Before`.  These are not counted in our total, since they never set foot on campus.
 
 ```{r student_cases_table}
 load("data/CS_Tab.Rdata")
@@ -97,7 +96,7 @@ CS_Tab %>%
 
 
 
-```{r student_cases_vis, fig.height = 4}
+```{r student_cases_vis, fig.height = 5}
 load("data/mCS.Rdata")
 adjust = 1
 S_days_fill %>%
@@ -122,11 +121,10 @@ S_days_fill %>%
           legend.position="bottom") + 
     ylab("Students") + 
     xlab("Date")+
-    geom_vline(xintercept =  seq(f21, last, "months"))
-#+
-#    geom_hline(yintercept =  seq(0, mCS+1, 10)/mCS, linetype = "dotted")+
-#    annotate("text", x = f21+2,
-#             y = seq(11, mCS, 10)/mCS, label = seq(10, mCS, 10))
+    geom_vline(xintercept =  seq(f21, last, "months"))+
+    geom_hline(yintercept =  seq(0, mCS+1, 10)/mCS, linetype = "dotted")+
+    annotate("text", x = f21+2,
+             y = (seq(10, mCS, 10)+1)/mCS, label = seq(10, mCS, 10))
 ```
 
 ### Confirmed Cases Among Employees
@@ -146,7 +144,7 @@ load("data/CE_days_fill.Rdata")
 load("data/mCE.Rdata")
 adjust = 1
 CE_days_fill %>%
-  ggplot(aes(x = Test_Date, fill = "red")) + 
+  ggplot(aes(x = test_date, fill = "red")) + 
     geom_dotplot(method = "histodot",
                  binwidth = 1,
                  stackgroups = TRUE,
@@ -280,7 +278,7 @@ T_Pos %>%
 
 # Isolated
 
-Grace College required students to test negative before arriving on campus, and those that tested positive before coming are listed in the column `Before`.  These are not counted in our total, since they never set foot on campus.
+Students are classified as `Isolated` if they show symptoms or test positive.
 
 ### Isolated Students
 
@@ -295,7 +293,7 @@ IS_Tab %>%
 ```
 
 
-```{r student_isolations_vis, fig.height = 4}
+```{r student_isolations_vis, fig.height = 5}
 load("data/mIS.Rdata")
 adjust = 1
 cf = max(mIS+2, 5)
@@ -321,11 +319,10 @@ S_days_fill %>%
           legend.position="bottom") + 
     ylab("Students") + 
     xlab("Date")+
-    geom_vline(xintercept =  seq(f21, last, "months"))
-#+
-#    geom_hline(yintercept =  seq(0, mIS+1, 10)/cf, linetype = "dotted")+
-#    annotate("text", x = f21+2,
-#             y = (1+seq(10, cf-1, 10))/cf, label = seq(10, cf-1, 10))
+    geom_vline(xintercept =  seq(f21, last, "months"))+
+    geom_hline(yintercept =  seq(0, mIS+1, 10)/cf, linetype = "dotted")+
+    annotate("text", x = f21+2,
+             y = (1+seq(10, cf-1, 10))/cf, label = seq(10, cf-1, 10))
 ```
 
 ### Isolated Employees
@@ -374,7 +371,7 @@ IE_days_fill %>%
 
 ### Quarantined Students
 
-In the table below, `Grace_travel` are quarentines from international travel, and are not counted among the category `Grace` or the category `Total`.  Neither are they graphed below.  This is because these quarantines are from international travel, not exposure to COVID-19.
+Students are classified as `Quarantine` if they are contact-traced to a positive case, but have not shown symptoms or tested positive.
 
 ```{r student_quarantines_table}
 load("data/QS_Tab.Rdata")
@@ -388,9 +385,9 @@ QS_Tab %>%
 
 
 
-```{r student_quarantines_vis, fig.height=4}
+```{r student_quarantines_vis, fig.height=5.5}
 load("data/mQS.Rdata")
-adjust = 1
+adjust = 0.5
 cf = max(mQS, 5)
 S_days_fill %>%
   filter(type == "Quarantine", location != "Grace_travel") %>%
@@ -407,18 +404,17 @@ S_days_fill %>%
     scale_y_continuous(NULL, breaks = NULL) + 
     scale_fill_manual(values = c_vals) +
     # Make this as high as the tallest column
-    coord_fixed(ratio = cf) +
+    coord_fixed(ratio = cf*adjust) +
     ggtitle("Active Quarantined Students Each Day") + 
     theme(plot.title = element_text(hjust = 0.5),
           legend.text = element_text(size = 15),
           legend.position="bottom") + 
     ylab("Students") + 
     xlab("Date") +
-    geom_vline(xintercept =  seq(f21, last, "months"))
-#+
-#    geom_hline(yintercept =  seq(0, mQS, 10)/cf, linetype = "dotted")+
-#    annotate("text", x = f21+2,
-#             y = (1+seq(10, mQS, 10))/cf, label = seq(10, mQS, 10))
+    geom_vline(xintercept =  seq(f21, last, "months"))+
+    geom_hline(yintercept =  seq(0, mQS, 10)/cf, linetype = "dotted")+
+    annotate("text", x = f21+2,
+             y = (1+seq(10, mQS, 10))/cf, label = seq(10, mQS, 10))
 ```
 
 ### Quarantined Employees
@@ -482,6 +478,7 @@ nK2 = nrow(K)
 K$TEST_RATE <- K$CCT / K$CTT
 K$TEST_RATE <- c(rep(NA, 3), K$TEST_RATE[seq(-nK2, length.out = 3)])
 
+KT <- K
 K <- subset(K, DATE > cfirst)
 nK = nrow(K)
 
@@ -494,6 +491,7 @@ nI2 = nrow(I)
 I$TEST_RATE <- I$CC7 / I$CT7
 I$TEST_RATE <- c(rep(NA, 3), I$TEST_RATE[seq(-nI2, length.out = 3)])
 
+IT <- I
 I <- subset(I, DATE > cfirst)
 nI = nrow(I)
 
@@ -506,7 +504,7 @@ weekspan <- 3*7/(as.numeric(clast) - as.numeric(cfirst)+2)
 Kosciusko County has had
 
 * `r K$COVID_COUNT_MOVING_AVG[[nK]]` cases per day the past week.
-* `r sum(K$COVID_COUNT)` total confirmed cases.
+* `r format(sum(KT$COVID_COUNT), nsmall=0, big.mark=",")` total confirmed cases.
 
 ### Cases - Kosciusko
 
@@ -529,12 +527,12 @@ ggplot(K, aes(x = DATE, y = COVID_COUNT)) +
 
 ### Positivity - Kosciusko
 
-Kosciusko County has had `r subset(K, DATE == yest - 7)$POSITIVE_TEST_RATE_MOVING_AVG`% 7-day positivity rate for unique indiviudals as of `r format(yest-7, "%B %d")`.
+Kosciusko County has had `r subset(K, DATE == yest - 7)$ALL_TESTS_POSITIVE_TEST_RATE_MOVING_AVG`% 7-day positivity rate as of `r format(yest-7, "%B %d")`.
 
 
 
 ```{r K_pos, fig.height=5}
-ggplot(subset(K, DATE < yest - 6), aes(x = DATE, y = POSITIVE_TEST_RATE_MOVING_AVG/100)) + 
+ggplot(subset(K, DATE < yest - 6), aes(x = DATE, y = ALL_TESTS_POSITIVE_TEST_RATE_MOVING_AVG/100)) + 
   geom_point(size = 4) +
   scale_x_date(date_labels="%b %d",
                date_breaks  = "7 days",
@@ -562,7 +560,7 @@ The total case numbers below are multiplied by $\frac{\text{Kos pop}}{\text{Ind 
 Indiana has had
 
 * `r round(I$CC7[[nI]], digits = 1)` cases per day the past week (normalized `r round(I$CC7[[nI]]*79456/6732000, digits = 1)`).
-* `r prettyNum(sum(I$COVID_COUNT),big.mark=",",scientific=FALSE)` total confirmed cases (normalized `r round(sum(I$COVID_COUNT)*79456/6732000, digits = 1)`).
+* `r prettyNum(sum(IT$COVID_COUNT),big.mark=",",scientific=FALSE)` total confirmed cases (normalized `r prettyNum(sum(IT$COVID_COUNT)*79456/6732000,big.mark=",",scientific=FALSE)`).
 
 ### Cases - Indiana
 
@@ -585,7 +583,7 @@ ggplot(I, aes(x = DATE, y = COVID_COUNT * 79456/6732000)) +
 
 ### Positivity - Indiana
 
-Indiana reports a `r round(subset(I, DATE == yest - 7)$POSITIVITY_RATE_ALL_TESTS, 1)`% 7-day positivity rate for all tests as of `r format(yest-7, "%B %d")`.
+Indiana reports a `r round(subset(I, DATE == yest - 7)$POSITIVITY_RATE_ALL_TESTS, 1)`% 7-day positivity rate of `r format(yest-7, "%B %d")`.
 
 ```{r I_pos, fig.height=5}
 ggplot(subset(I, DATE <= yest - 7), aes(x = DATE, y = POSITIVITY_RATE_ALL_TESTS/100)) + 
@@ -596,7 +594,7 @@ ggplot(subset(I, DATE <= yest - 7), aes(x = DATE, y = POSITIVITY_RATE_ALL_TESTS/
                limits = c(cfirst, clast)) + 
   scale_y_continuous(labels = scales::percent_format(accuracy = 1),
                      limit=c(0,NA)) +
-  ggtitle("Indiana Average Positivity Rate for All Tests") + 
+  ggtitle("Indiana Average Positivity Rate") + 
   theme(plot.title = element_text(size= 20, hjust = 0.5),
         legend.text = element_text(size = 15)) + 
   ylab("Percent Positive") + 
@@ -614,7 +612,7 @@ ggplot(subset(I, DATE <= yest - 7), aes(x = DATE, y = POSITIVITY_RATE_ALL_TESTS/
 
 The map below displays the cases per 100,000 per day averaged over the past week and the positivity rate for unique individuals averaged over the previous week.  The coloring scheme is relative, it colors the best county white and the worst county red.
 
-```{r I_map, fig.width=12, fig.height=14}
+```{r I_map, fig.width=12, fig.height=14, message=FALSE}
 lat_and_long <- read_excel("data/lat_and_long.xlsx")
 lat_and_long$COUNTY_NUMERIC <- lat_and_long$COUNTY_NUMERIC + 18000
 load("data/county_populations.RData")
@@ -622,9 +620,9 @@ county_data <- merge(x = pops, y = lat_and_long,
                      by.x = "key_numeric",
                      by.y = "COUNTY_NUMERIC")
 
-
+latest = max(IN_counties$DATE)
 counties_yest <- IN_counties[IN_counties$DATE == yest-7,]
-counties_yest$COVID_COUNT_MOVING_AVG <- IN_counties[IN_counties$DATE == yest-1,]$COVID_COUNT_MOVING_AVG
+counties_yest$COVID_COUNT_MOVING_AVG <- IN_counties[IN_counties$DATE == latest,]$COVID_COUNT_MOVING_AVG
 
 Indices <- merge(x = counties_yest, y = county_data,
                  by.x = "LOCATION_ID",
@@ -663,7 +661,7 @@ plot_usmap("counties",
 ```
 
 
-```{r vaccines, message = FALSE}
+```{r vaccines, results='hide'}
 #Vaccinations by Zip
 url = "https://hub.mph.in.gov/dataset/d0cb45af-c9de-40f5-9394-de367c17a7a1/resource/c496b384-f543-417e-912f-995caebf5fc0/download/vaccinations-by-zip-with-population.csv"
 vacs <- read.csv(url)%>%
@@ -677,7 +675,7 @@ vacs <- read.csv(url)%>%
            TRUE ~ parse_double(single_dose_administered)
          ),
          partial = case_when(
-           (first + single) > 0 ~ (first + single)/population_12_and_over,
+           (first + single) > 0 ~ (first + single)/eligible_population,
            TRUE ~ as.numeric(NA)
          )
   )
@@ -701,7 +699,7 @@ w_zips = c(46580, 46590, 46582, 46538, 46555, 46562, 46510,
 
 ## Statewide vaccine percentages
 
-The following map shows percentages of adults who have had at least one vaccine shot.  Percentages are based on population census data from 10-11 years ago.
+The following map shows percentages of eligible people who have had at least one vaccine shot.  Percentages are based on population census data from 10-11 years ago.
 
 ```{r vacs-state, fig.width=12, fig.height=14}
 ggplot(In_zip) +
@@ -717,7 +715,7 @@ ggplot(In_zip) +
 
 ## Regional vaccine percentages
 
-The following map shows percentages of adults who have had at least one vaccine shot.  Percentages are based on population census data from 10-11 years ago.
+The following map shows percentages of elgible people who have had at least one vaccine shot.  Percentages are based on population census data from 10-11 years ago.
 
 The region below extends from Plymouth (46563) in the West to Columbia City (46725) in the East.
 
