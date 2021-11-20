@@ -13,6 +13,7 @@ fname = paste("G:/Shared drives/Dashboard - COVID-19/Grace internal ",
               format(this_day), ".pdf", sep = "")
 render("daily_report.Rmd", output_file = fname)
 render("daily_report.Rmd", output_file = "daily_report.pdf")
+render("../website/Central_Europe.Rmd", output_file = "../website/Central_Europe.html")
 
 source("R/Tables.R")
 
