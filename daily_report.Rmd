@@ -74,7 +74,7 @@ Notes and Irregularities:
 
   - This report counts all cases that began after 8/14/2021 as fall semester.
   - On 8/27/2021 an error was corrected regarding the total cases for Kosciusko County and Indiana.  Those totals had previously only counted the last three months.
-  - On 11/5/2021 a new method for determining the end date for employee quarantines and isolations was implemented.  Several employees who had been quarantined were never marked with and end date.  We now count any quarantined employee without an end date to be complete after two weeks.
+  - On 11/5/2021 a new method for determining the end date for employee quarantines and isolations was implemented.  Several employees who had been quarantined were never marked with an end date.  We now count any quarantined employee without an end date to be complete after two weeks.
 
 \newpage
 

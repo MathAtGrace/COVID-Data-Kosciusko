@@ -16,7 +16,7 @@ last <- as.Date("2021-12-31")
 
 SF21 <- S_fall21%>%
   clean_names() %>%#In case of emergency: unnest_longer(problem_column,indices_include = FALSE)
-  select(id:first_name, vax_proof,
+  select(id:first_name, soft_quarantine,
          quarantine_isolation_location:actual_release_from_quar_iso,
          complete, positive_before_coming)%>%
   #  filter(is.na(positive_at_home)) %>%
@@ -65,7 +65,7 @@ SF21 <- S_fall21%>%
     tolower(substring(location, 1, 4)) == "poss" ~ "Home",
     tolower(substring(location, 1, 4)) == "comm" ~ "Home",
     TRUE ~ "Grace"), levels = c("Before", "Home", "Grace"))) %>% #, "Grace_travel"
-  select(id, first_name, last_name, location, vax_proof,
+  select(id, first_name, last_name, location, soft_quarantine,
          type, test_result, test_date, started, end_date)
 save(SF21, file = "data/SF21.Rdata")
 
